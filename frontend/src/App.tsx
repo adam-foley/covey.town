@@ -26,6 +26,7 @@ import { Callback } from './components/VideoCall/VideoFrontend/types';
 import Player, { ServerPlayer, UserLocation } from './classes/Player';
 import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClient';
 import Video from './classes/Video/Video';
+import { YTVideo, videoList } from './YoutubeVids';
 
 type CoveyAppUpdate =
   | { action: 'doConnect'; data: { userName: string, townFriendlyName: string, townID: string,townIsPubliclyListed:boolean, sessionToken: string, myPlayerID: string, socket: Socket, players: Player[], emitMovement: (location: UserLocation) => void } }
@@ -200,38 +201,38 @@ async function GameController(initData: TownJoinResponse,
   return true;
 }
 
-type YTVideo = {
-  id: number;
-  title: string;
-  creator: string;
-  duration: number;
-}
+// type YTVideo = {
+//   id: number;
+//   title: string;
+//   creator: string;
+//   duration: number;
+// }
 
-const video1 : YTVideo = {
-  id: 1,
-  title: "Post Malone Take Jimmy Fallon to Olive Garden",
-  creator: "The Tonight Show",
-  duration: 450,
-};
+// const video1 : YTVideo = {
+//   id: 1,
+//   title: "Post Malone Take Jimmy Fallon to Olive Garden",
+//   creator: "The Tonight Show",
+//   duration: 450,
+// };
 
-const video2 : YTVideo = {
-  id: 2,
-  title: "Mac Miller: NPR Music Tiny Desk Concert",
-  creator: "NPR Music",
-  duration: 750,
-};
+// const video2 : YTVideo = {
+//   id: 2,
+//   title: "Mac Miller: NPR Music Tiny Desk Concert",
+//   creator: "NPR Music",
+//   duration: 750,
+// };
 
-const videoList : YTVideo[] = [];
+// const videoList : YTVideo[] = [];
 
-videoList.push(video1);
-videoList.push(video2);
+// videoList.push(video1);
+// videoList.push(video2);
 
 const VideoWidget: React.FunctionComponent = () => {
 
   const renderVideos = () => videoList.map(video =>
-    <Tr key={video.id}>
+    <Tr key={video.url}>
       <Td role='cell'>{video.title}</Td>
-      <Td role='cell'>{video.creator}</Td>
+      <Td role='cell'>{video.channel}</Td>
       <Td role='cell'>{video.duration}</Td>
       <Td ><Radio colorScheme="red" value="1">
         Play Next
