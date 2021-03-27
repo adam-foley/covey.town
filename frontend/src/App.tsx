@@ -26,7 +26,7 @@ import { Callback } from './components/VideoCall/VideoFrontend/types';
 import Player, { ServerPlayer, UserLocation } from './classes/Player';
 import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClient';
 import Video from './classes/Video/Video';
-import { YTVideo, videoList } from './YoutubeVids';
+import { videoList } from './YoutubeVids';
 
 type CoveyAppUpdate =
   | { action: 'doConnect'; data: { userName: string, townFriendlyName: string, townID: string,townIsPubliclyListed:boolean, sessionToken: string, myPlayerID: string, socket: Socket, players: Player[], emitMovement: (location: UserLocation) => void } }
@@ -228,17 +228,20 @@ async function GameController(initData: TownJoinResponse,
 // videoList.push(video2);
 
 const VideoWidget: React.FunctionComponent = () => {
+  const [radioButtonState, setRadioButtonState] = React.useState(videoList.length > 0 ? videoList[0].url : '');
 
-  const renderVideos = () => videoList.map(video =>
-    <Tr key={video.url}>
-      <Td role='cell'>{video.title}</Td>
-      <Td role='cell'>{video.channel}</Td>
-      <Td role='cell'>{video.duration}</Td>
-      <Td ><Radio colorScheme="red" value="1">
-        Play Next
-      </Radio></Td>
-    </Tr>
-  )
+  const renderVideos = () => videoList.map(video => (
+      <Tr key={video.url}>
+        <Td role='cell'>{video.title}</Td>
+        <Td role='cell'>{video.channel}</Td>
+        <Td role='cell'>{video.duration}</Td>
+        <Td >
+          <Radio value={video.url} isChecked={radioButtonState === video.url} onChange={() => setRadioButtonState(video.url)}>
+            Play Next
+          </Radio>
+        </Td>
+      </Tr>
+  ));
 
 
   // Joe - for new url submission. Check if URL is valid. If not say not added, if yes add it. Need to get youtube title, channel, duration using youtube api
