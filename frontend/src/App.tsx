@@ -5,7 +5,7 @@ import './App.css';
 import { BrowserRouter } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 // ADDED chakra
-import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, TableCaption, Tbody, Td, Th, Thead, Tr, Radio, RadioGroup, Popover, PopoverTrigger, Portal, PopoverContent, PopoverArrow, PopoverHeader, PopoverCloseButton, PopoverBody } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, TableCaption, Tbody, Td, Th, Thead, Tr, Radio } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
 import WorldMap from './components/world/WorldMap';
@@ -201,6 +201,32 @@ async function GameController(initData: TownJoinResponse,
   return true;
 }
 
+// type YTVideo = {
+//   id: number;
+//   title: string;
+//   creator: string;
+//   duration: number;
+// }
+
+// const video1 : YTVideo = {
+//   id: 1,
+//   title: "Post Malone Take Jimmy Fallon to Olive Garden",
+//   creator: "The Tonight Show",
+//   duration: 450,
+// };
+
+// const video2 : YTVideo = {
+//   id: 2,
+//   title: "Mac Miller: NPR Music Tiny Desk Concert",
+//   creator: "NPR Music",
+//   duration: 750,
+// };
+
+// const videoList : YTVideo[] = [];
+
+// videoList.push(video1);
+// videoList.push(video2);
+
 const VideoListWidget: React.FunctionComponent = () => {
   const [radioButtonState, setRadioButtonState] = React.useState(videoList.length > 0 ? videoList[0].url : '');
 
@@ -227,7 +253,7 @@ const VideoListWidget: React.FunctionComponent = () => {
           <Box maxH="400px" overflowY="scroll">
             <Table>
               <TableCaption placement="top">Video Collection</TableCaption>
-              <Thead><Tr><Th>Video Title</Th><Th>Creator</Th><Th>Duration</Th><Th>Vote which Video plays next</Th></Tr></Thead>
+              <Thead><Tr><Th>Video Title</Th><Th>Creator</Th><Th>Duration</Th><Th>Select Video to Play Next</Th></Tr></Thead>
                 <Tbody>
                   {listVideos()}
                 </Tbody>
