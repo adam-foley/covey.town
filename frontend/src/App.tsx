@@ -5,7 +5,7 @@ import './App.css';
 import { BrowserRouter } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 // ADDED chakra
-import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, TableCaption, Tbody, Td, Th, Thead, Tr, Radio } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, TableCaption, Tbody, Td, Th, Thead, Tr, Radio, RadioGroup, Popover, PopoverTrigger, Portal, PopoverContent, PopoverArrow, PopoverHeader, PopoverCloseButton, PopoverBody } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
 import WorldMap from './components/world/WorldMap';
@@ -26,7 +26,7 @@ import { Callback } from './components/VideoCall/VideoFrontend/types';
 import Player, { ServerPlayer, UserLocation } from './classes/Player';
 import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClient';
 import Video from './classes/Video/Video';
-import { YTVideo, videoList } from './YoutubeVids';
+import { videoList } from './YoutubeVids';
 
 type CoveyAppUpdate =
   | { action: 'doConnect'; data: { userName: string, townFriendlyName: string, townID: string,townIsPubliclyListed:boolean, sessionToken: string, myPlayerID: string, socket: Socket, players: Player[], emitMovement: (location: UserLocation) => void } }
@@ -201,44 +201,21 @@ async function GameController(initData: TownJoinResponse,
   return true;
 }
 
-// type YTVideo = {
-//   id: number;
-//   title: string;
-//   creator: string;
-//   duration: number;
-// }
+const VideoListWidget: React.FunctionComponent = () => {
+  const [radioButtonState, setRadioButtonState] = React.useState(videoList.length > 0 ? videoList[0].url : '');
 
-// const video1 : YTVideo = {
-//   id: 1,
-//   title: "Post Malone Take Jimmy Fallon to Olive Garden",
-//   creator: "The Tonight Show",
-//   duration: 450,
-// };
-
-// const video2 : YTVideo = {
-//   id: 2,
-//   title: "Mac Miller: NPR Music Tiny Desk Concert",
-//   creator: "NPR Music",
-//   duration: 750,
-// };
-
-// const videoList : YTVideo[] = [];
-
-// videoList.push(video1);
-// videoList.push(video2);
-
-const VideoWidget: React.FunctionComponent = () => {
-
-  const renderVideos = () => videoList.map(video =>
-    <Tr key={video.url}>
-      <Td role='cell'>{video.title}</Td>
-      <Td role='cell'>{video.channel}</Td>
-      <Td role='cell'>{video.duration}</Td>
-      <Td ><Radio colorScheme="red" value="1">
-        Play Next
-      </Radio></Td>
-    </Tr>
-  )
+  const listVideos = () => videoList.map(video => (
+      <Tr key={video.url}>
+        <Td role='cell'>{video.title}</Td>
+        <Td role='cell'>{video.channel}</Td>
+        <Td role='cell'>{video.duration}</Td>
+        <Td >
+          <Radio value={video.url} isChecked={radioButtonState === video.url} onChange={() => setRadioButtonState(video.url)}>
+            Play Next
+          </Radio>
+        </Td>
+      </Tr>
+  ));
 
 
   // Joe - for new url submission. Check if URL is valid. If not say not added, if yes add it. Need to get youtube title, channel, duration using youtube api
@@ -250,9 +227,9 @@ const VideoWidget: React.FunctionComponent = () => {
           <Box maxH="400px" overflowY="scroll">
             <Table>
               <TableCaption placement="top">Video Collection</TableCaption>
-              <Thead><Tr><Th>Video Title</Th><Th>Creator</Th><Th>Duration</Th><Th>Select Video to Play Next</Th></Tr></Thead>
+              <Thead><Tr><Th>Video Title</Th><Th>Creator</Th><Th>Duration</Th><Th>Vote which Video plays next</Th></Tr></Thead>
                 <Tbody>
-                  {renderVideos()}
+                  {listVideos()}
                 </Tbody>
             </Table>
           </Box>
@@ -296,7 +273,7 @@ function App(props: { setOnDisconnect: Dispatch<SetStateAction<Callback | undefi
       <div>
         <WorldMap />
         <VideoOverlay preferredMode="fullwidth" />
-        <VideoWidget />
+        <VideoListWidget />
       </div>
     );
   }, [setupGameController, appState.sessionToken, videoInstance]);
