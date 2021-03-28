@@ -28,6 +28,7 @@ import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClie
 import Video from './classes/Video/Video';
 import { videoList } from './YoutubeVids';
 
+
 type CoveyAppUpdate =
   | { action: 'doConnect'; data: { userName: string, townFriendlyName: string, townID: string,townIsPubliclyListed:boolean, sessionToken: string, myPlayerID: string, socket: Socket, players: Player[], emitMovement: (location: UserLocation) => void } }
   | { action: 'addPlayer'; player: Player }
@@ -247,6 +248,28 @@ const VideoListWidget: React.FunctionComponent = () => {
   );
 }
 
+function Countdown() {
+  const [counter, setCounter] = useState(20);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (counter > 0) {
+        setCounter(counter - 1);
+      }
+      if (counter === 0) {
+          clearInterval(timer)
+      }
+      } , 1000);
+    return () => clearInterval(timer);
+  }, [counter]);
+
+  return (
+    <div className="App">
+      <div>Countdown: {counter}</div>
+    </div>
+  );
+}
+
 function App(props: { setOnDisconnect: Dispatch<SetStateAction<Callback | undefined>> }) {
   const [appState, dispatchAppUpdate] = useReducer(appStateReducer, defaultAppState());
 
@@ -274,6 +297,7 @@ function App(props: { setOnDisconnect: Dispatch<SetStateAction<Callback | undefi
       <div>
         <WorldMap />
         <VideoOverlay preferredMode="fullwidth" />
+        <Countdown />
         <VideoListWidget />
       </div>
     );
