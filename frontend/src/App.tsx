@@ -5,7 +5,7 @@ import './App.css';
 import { BrowserRouter } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 // ADDED chakra
-import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, TableCaption, Tbody, Td, Th, Thead, Tr, Radio } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
 import WorldMap from './components/world/WorldMap';
@@ -225,9 +225,9 @@ const VideoListWidget: React.FunctionComponent = () => {
     <>
       <form>
         <Stack>
-          <Box maxH="400px" overflowY="scroll">
+        <Heading p="5" as="h5" size="md">Select a video to watch</Heading>
+          <Box maxH="400px" overflowY="scroll" borderWidth="1px" borderRadius="lg">
             <Table>
-              <TableCaption placement="top">Video Collection</TableCaption>
               <Thead><Tr><Th>Video Title</Th><Th>Creator</Th><Th>Duration</Th><Th>Vote on next video</Th></Tr></Thead>
                 <Tbody>
                   {listVideos()}
