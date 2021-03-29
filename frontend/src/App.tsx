@@ -202,7 +202,7 @@ async function GameController(initData: TownJoinResponse,
   return true;
 }
 
-let voteVideoURL = "";
+let voteVideoURL = videoList.length > 0 ? videoList[0].url : '';
 
 function Countdown() {
   const [counter, setCounter] = useState(30);
@@ -215,7 +215,7 @@ function Countdown() {
       if (counter === 0) {
           clearInterval(timer)
       }
-      } , 1000);
+    } , 1000);
     return () => clearInterval(timer);
   }, [counter]);
 
@@ -263,7 +263,9 @@ const VideoListWidget: React.FunctionComponent = () => {
         <Td role='cell'>{video.channel}</Td>
         <Td role='cell'>{video.duration}</Td>
         <Td >
-          <Radio value={video.url} isChecked={radioButtonState === video.url} onChange={() => {setRadioButtonState(video.url); voteVideoURL=radioButtonState}}>
+          <Radio value={video.url} isChecked={radioButtonState === video.url} 
+            onChange={() => {setRadioButtonState(video.url); voteVideoURL=video.url}}
+          >
             Play Next
           </Radio>
         </Td>
