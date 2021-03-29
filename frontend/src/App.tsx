@@ -5,7 +5,7 @@ import './App.css';
 import { BrowserRouter } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 // ADDED chakra
-import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading, useToast } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
 import WorldMap from './components/world/WorldMap';
@@ -26,7 +26,7 @@ import { Callback } from './components/VideoCall/VideoFrontend/types';
 import Player, { ServerPlayer, UserLocation } from './classes/Player';
 import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClient';
 import Video from './classes/Video/Video';
-import { videoList } from './YoutubeVids';
+import { YTVideo, videoList, getVideos } from './YoutubeVids';
 
 
 type CoveyAppUpdate =
@@ -205,7 +205,7 @@ async function GameController(initData: TownJoinResponse,
 let voteVideoURL = "";
 
 function Countdown() {
-  const [counter, setCounter] = useState(20);
+  const [counter, setCounter] = useState(30);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -226,10 +226,38 @@ function Countdown() {
   );
 }
 
-const VideoListWidget: React.FunctionComponent = () => {
-  const [radioButtonState, setRadioButtonState] = React.useState(videoList.length > 0 ? videoList[0].url : '');
+function addURLToVideoList(inputURL: string) {
+  // figure out YOUTUBE DATA API to take in URL and get the details to fill in list: title, channel name, duration
+  // once that is successfull, add to video list, else throw error
+  // this should probably be in the backend along with teh YoutubeVids.tsx
+  try {
+    // Get details for Youtube DATA API. for now filled iwht placeholders
+    const newVideo: YTVideo = {url: inputURL, title: "NEW TITLE", channel: "NEW CHANNEL", duration: "TIME"};
+    videoList.push(newVideo);
+  } catch (err) {
+    throw new Error(`Error processing request for submitted URL`)
+  }
 
-  const listVideos = () => videoList.map(video => (
+};
+
+const VideoListWidget: React.FunctionComponent = () => {
+  const toast = useToast();
+  const [radioButtonState, setRadioButtonState] = useState(videoList.length > 0 ? videoList[0].url : '');
+  const [newVideoURL, setNewVideoURL] = useState('');
+  const [ytVideos, setYTVideos] = useState<YTVideo[]>([]);
+
+  useEffect(() => { // not working correctly at refreshing list when new video added
+    function getVideoList() {
+      setYTVideos(getVideos()); // getVideo is the getter to get yourube videos list. function in import
+    }
+    getVideoList();
+    const timeout = setTimeout(() => getVideoList(), 2000);
+    return function cancel() {
+      clearTimeout(timeout);
+    }
+  }, []);
+
+  const listVideos = () => ytVideos.map(video => (
       <Tr key={video.url}>
         <Td role='cell'>{video.title}</Td>
         <Td role='cell'>{video.channel}</Td>
@@ -242,9 +270,34 @@ const VideoListWidget: React.FunctionComponent = () => {
       </Tr>
   ));
 
+  const addNewURL = () => {
+    try {
+      if (!newVideoURL || newVideoURL.length === 0) {
+        toast({
+          title: 'Unable to submit video suggestion',
+          description: 'Please enter a valid Youtube URL',
+          status: 'error',
+        });
+        return;
+      }
+      const newURL = addURLToVideoList(newVideoURL);
+      toast({
+        title: `New video is adeed to the video collection!`,
+        status: 'success',
+        isClosable: true,
+        duration: null,
+      })
+    }catch (err) {
+      toast({
+        title: 'Unable to add URL to video collection.',
+        description: err.toString(),
+        status: 'error'
+      })
+    }
+  };
+
 
   // Joe - for new url submission. Check if URL is valid. If not say not added, if yes add it. Need to get youtube title, channel, duration using youtube api
-  // Make a countdown that starts when video ends. When countdown ends, need to submit votes and 
   return (
     <>
       <form>
@@ -260,11 +313,11 @@ const VideoListWidget: React.FunctionComponent = () => {
           </Box>
 
           <FormControl id="email">
-            <FormLabel>Submit new video to you would like to watch</FormLabel>
-            <Input type="URL" />
+            <FormLabel p="5" as="h5" size="md">Submit new video to you would like to watch</FormLabel>
+            <Input name="newVideo" placeholder="Youtube URL" value={newVideoURL} onChange={event => setNewVideoURL(event.target.value)}/>
             <FormHelperText>Please enter in the Youtube URL.</FormHelperText>
           </FormControl>
-          <Button colorScheme="blue">Submit new Video</Button>
+          <Button colorScheme="blue" onClick={addNewURL}>Submit new Video</Button>
         </Stack>
       </form>
     </>
