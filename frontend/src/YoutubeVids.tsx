@@ -5,7 +5,13 @@ export type YTVideo = {
     duration: string;
 }
 
+// THIS SHOULD PROBABLY BE IN THE BACKEND
+
 export const videoList : YTVideo[] = [];
+
+export function getVideos(): YTVideo[] {
+    return videoList;
+}
 
 const video1 : YTVideo = {
     url: "https://www.youtube.com/watch?v=QtXby3twMmI",
