@@ -214,6 +214,14 @@ function Countdown() {
       }
       if (counter === 0) {
           clearInterval(timer)
+          
+          /**
+           * Once the counter reaches 0, the socket should emit a message 
+           * to the backend with the correct message and the videoURL. 
+           * We have to wait until we merge with Andrew and Adam's code to implement this.
+           */
+
+          // appState.socket?.emit('CORRECT_MESSAGE_HERE', { videoURL: voteVideoURL });
       }
     } , 1000);
     return () => clearInterval(timer);
