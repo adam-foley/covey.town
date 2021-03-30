@@ -5,7 +5,7 @@ import './App.css';
 import { BrowserRouter } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 // ADDED chakra
-import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading, useToast } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading, useToast, useForceUpdate } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
 import WorldMap from './components/world/WorldMap';
@@ -57,6 +57,7 @@ function defaultAppState(): CoveyAppState {
     apiClient: new TownsServiceClient(),
   };
 }
+
 function appStateReducer(state: CoveyAppState, update: CoveyAppUpdate): CoveyAppState {
   const nextState = {
     sessionToken: state.sessionToken,
@@ -129,7 +130,6 @@ function appStateReducer(state: CoveyAppState, update: CoveyAppUpdate): CoveyApp
       if (samePlayers(nextState.nearbyPlayers, state.nearbyPlayers)) {
         nextState.nearbyPlayers = state.nearbyPlayers;
       }
-
       break;
     case 'playerDisconnect':
       nextState.players = nextState.players.filter((player) => player.id !== update.player.id);
@@ -206,7 +206,6 @@ let voteVideoURL = videoList.length > 0 ? videoList[0].url : '';
 
 function Countdown() {
   const [counter, setCounter] = useState(30);
-
   useEffect(() => {
     const timer = setInterval(() => {
       if (counter > 0) {
@@ -234,36 +233,12 @@ function Countdown() {
   );
 }
 
-function addURLToVideoList(inputURL: string) {
-  // figure out YOUTUBE DATA API to take in URL and get the details to fill in list: title, channel name, duration
-  // once that is successfull, add to video list, else throw error
-  // this should probably be in the backend along with teh YoutubeVids.tsx
-  try {
-    // Get details for Youtube DATA API. for now filled iwht placeholders
-    const newVideo: YTVideo = {url: inputURL, title: "NEW TITLE", channel: "NEW CHANNEL", duration: "TIME"};
-    videoList.push(newVideo);
-  } catch (err) {
-    throw new Error(`Error processing request for submitted URL`)
-  }
-
-};
-
 const VideoListWidget: React.FunctionComponent = () => {
   const toast = useToast();
+  const forceUpdate = useForceUpdate();
   const [radioButtonState, setRadioButtonState] = useState(videoList.length > 0 ? videoList[0].url : '');
   const [newVideoURL, setNewVideoURL] = useState('');
   const [ytVideos, setYTVideos] = useState<YTVideo[]>([]);
-
-  useEffect(() => { // not working correctly at refreshing list when new video added
-    function getVideoList() {
-      setYTVideos(getVideos()); // getVideo is the getter to get yourube videos list. function in import
-    }
-    getVideoList();
-    const timeout = setTimeout(() => getVideoList(), 2000);
-    return function cancel() {
-      clearTimeout(timeout);
-    }
-  }, []);
 
   const listVideos = () => ytVideos.map(video => (
       <Tr key={video.url}>
@@ -272,7 +247,7 @@ const VideoListWidget: React.FunctionComponent = () => {
         <Td role='cell'>{video.duration}</Td>
         <Td >
           <Radio value={video.url} isChecked={radioButtonState === video.url} 
-            onChange={() => {setRadioButtonState(video.url); voteVideoURL=video.url}}
+            onChange={() => {setRadioButtonState(video.url); voteVideoURL=video.url;}}
           >
             Play Next
           </Radio>
@@ -280,7 +255,26 @@ const VideoListWidget: React.FunctionComponent = () => {
       </Tr>
   ));
 
-  const addNewURL = () => {
+  // Forces a render
+  const handleForceUpdate = React.useCallback(() => {
+    forceUpdate();
+  }, [forceUpdate]);
+
+  function addVideoToVideoList(inputURL: string) {
+    // Figure out YOUTUBE DATA API to take in URL and get the details to fill in list: title, channel name, duration
+    // Once that is successful, add to video list; else throw error
+    // This should probably be in the backend along with teh YoutubeVids.tsx
+
+    try {
+      // Get details for YouTube DATA API. for now filled with placeholders
+      const newVideo: YTVideo = {url: inputURL, title: "NEW TITLE", channel: "NEW CHANNEL", duration: "TIME"};
+      videoList.push(newVideo);
+    } catch (err) {
+      throw new Error(`Error processing request for submitted URL`)
+    }
+  };
+
+  const handleAddNewURL = () => {
     try {
       if (!newVideoURL || newVideoURL.length === 0) {
         toast({
@@ -290,14 +284,14 @@ const VideoListWidget: React.FunctionComponent = () => {
         });
         return;
       }
-      const newURL = addURLToVideoList(newVideoURL);
+      addVideoToVideoList(newVideoURL);
       toast({
-        title: `New video is adeed to the video collection!`,
+        title: `New video is added to the video collection!`,
         status: 'success',
         isClosable: true,
-        duration: null,
+        duration: 3000,
       })
-    }catch (err) {
+    } catch (err) {
       toast({
         title: 'Unable to add URL to video collection.',
         description: err.toString(),
@@ -306,6 +300,16 @@ const VideoListWidget: React.FunctionComponent = () => {
     }
   };
 
+  useEffect(() => {
+    const getVideoList = () => {
+      setYTVideos(getVideos()); // getVideo is the getter to get youtube videos list. function in import
+    }
+    getVideoList();
+    const timeout = setTimeout(() => getVideoList(), 2000);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
 
   // Joe - for new url submission. Check if URL is valid. If not say not added, if yes add it. Need to get youtube title, channel, duration using youtube api
   return (
@@ -327,7 +331,14 @@ const VideoListWidget: React.FunctionComponent = () => {
             <Input name="newVideo" placeholder="Youtube URL" value={newVideoURL} onChange={event => setNewVideoURL(event.target.value)}/>
             <FormHelperText>Please enter in the Youtube URL.</FormHelperText>
           </FormControl>
-          <Button colorScheme="blue" onClick={addNewURL}>Submit new Video</Button>
+          <Button colorScheme="blue" 
+            onClick={() => {
+              handleAddNewURL(); 
+              handleForceUpdate();
+            }}
+          >
+            submit new video
+          </Button>
         </Stack>
       </form>
     </>
