@@ -265,6 +265,22 @@ const VideoListWidget: React.FunctionComponent = () => {
     // Once that is successful, add to video list; else throw error
     // This should probably be in the backend along with teh YoutubeVids.tsx
 
+    // try {
+    //   // Get details for YouTube DATA API. for now filled with placeholders
+    //   const API_KEY = process.env.YT_API_key;
+    //   const key = JSON.stringify(API_KEY);
+    //   const api = new YoutubeDataAPI(key);
+
+    //   const videoid = inputURL.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
+    //   const videoID = JSON.stringify(videoid);
+    //   console.log(videoID)
+    //   if(videoid != null) {
+    //     const reponse = api.searchVideo(videoID)
+    //     console.log(reponse);
+
+    //   } else { 
+    //     throw new Error(`Invalid URL`)
+    
     try {
       // Get details for YouTube DATA API. for now filled with placeholders
       const newVideo: YTVideo = {url: inputURL, title: "NEW TITLE", channel: "NEW CHANNEL", duration: "TIME"};
