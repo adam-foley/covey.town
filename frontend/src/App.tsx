@@ -8,6 +8,8 @@ import { io, Socket } from 'socket.io-client';
 import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading, useToast, useForceUpdate } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
+import axios from 'axios';
+import dotenv from 'dotenv';
 import WorldMap from './components/world/WorldMap';
 import VideoOverlay from './components/VideoCall/VideoOverlay/VideoOverlay';
 import { CoveyAppState, NearbyPlayers } from './CoveyTypes';
@@ -28,6 +30,7 @@ import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClie
 import Video from './classes/Video/Video';
 import { YTVideo, videoList, getVideos } from './YoutubeVids';
 
+dotenv.config();
 
 type CoveyAppUpdate =
   | { action: 'doConnect'; data: { userName: string, townFriendlyName: string, townID: string,townIsPubliclyListed:boolean, sessionToken: string, myPlayerID: string, socket: Socket, players: Player[], emitMovement: (location: UserLocation) => void } }
@@ -260,34 +263,53 @@ const VideoListWidget: React.FunctionComponent = () => {
     forceUpdate();
   }, [forceUpdate]);
 
-  function addVideoToVideoList(inputURL: string) {
-    // Figure out YOUTUBE DATA API to take in URL and get the details to fill in list: title, channel name, duration
-    // Once that is successful, add to video list; else throw error
-    // This should probably be in the backend along with teh YoutubeVids.tsx
+  function formatDuration(YTDuration:string){
+    const timeArray= YTDuration.match(/(\d+)(?=[MHS])/ig)||[]; 
+  
+    const formattedTime= timeArray.map((time) => {
+      if (timeArray.length === 1 && time.length < 2) {
+        return `00:0${time}`;
+      } 
+      if (timeArray.length === 1) {
+        return `00:${time}`;
+      } 
+      if (time.length<2) {
+        return `0${time}`;
+      } 
+      return time;
+    }).join(':');
+  
+    return formattedTime;
+  }
 
-    // try {
-    //   // Get details for YouTube DATA API. for now filled with placeholders
-    //   const API_KEY = process.env.YT_API_key;
-    //   const key = JSON.stringify(API_KEY);
-    //   const api = new YoutubeDataAPI(key);
-
-    //   const videoid = inputURL.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
-    //   const videoID = JSON.stringify(videoid);
-    //   console.log(videoID)
-    //   if(videoid != null) {
-    //     const reponse = api.searchVideo(videoID)
-    //     console.log(reponse);
-
-    //   } else { 
-    //     throw new Error(`Invalid URL`)
-    
-    try {
-      // Get details for YouTube DATA API. for now filled with placeholders
-      const newVideo: YTVideo = {url: inputURL, title: "NEW TITLE", channel: "NEW CHANNEL", duration: "TIME"};
-      videoList.push(newVideo);
-    } catch (err) {
-      throw new Error(`Error processing request for submitted URL`)
-    }
+  async function addVideoToVideoList(inputURL: string) {
+    const instance = axios.create({
+      baseURL: 'https://youtube.googleapis.com/youtube/v3',
+    });
+  
+    // referenced https://stackoverflow.com/questions/10591547/how-to-get-youtube-video-id-from-url for url parsing
+    const videoid = inputURL.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
+    if (videoid != null) {
+      const videoID = videoid[1];
+      const KEY = 'AIzaSyARJhezhEWEFRem0f-WI76EYEgKU_CIilQ'; // need to put into .env
+      // const KEY = process.env.API_KEY;
+      await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${KEY}`).then((response) => {
+        try {
+          const {title} = response.data.items[0].snippet;
+          const {channelTitle} = response.data.items[0].snippet;
+          const {duration} = response.data.items[0].contentDetails;
+          const formattedDuration = formatDuration(duration);
+          const newVideo: YTVideo = {url: inputURL, title, channel: channelTitle, duration:formattedDuration};
+          videoList.push(newVideo); // DEPENDS ON NEW DATA STRUCTURE CREATED
+        } catch (error) {
+          throw Error('Unable to added video'); // maybe have return -1, instead of throw errors. Then server can send -1, thus can mean certain toast shows error message
+        }
+      }).catch(() => {
+        throw Error('Unable to added video');
+      });
+    } else {
+      throw Error('Unable to use given video url');
+    } 
   };
 
   const handleAddNewURL = () => {
