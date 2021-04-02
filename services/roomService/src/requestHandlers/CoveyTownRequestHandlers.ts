@@ -245,6 +245,7 @@ export function townSubscriptionHandler(socket: Socket): void {
   socket.on('disconnect', () => {
     townController.removeTownListener(listener);
     townController.destroySession(s);
+    townController.removeFromTVArea(s.player)
   });
 
   // Register an event listener for the client socket: if the client updates their
