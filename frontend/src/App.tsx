@@ -285,13 +285,13 @@ const VideoListWidget: React.FunctionComponent = () => {
   async function addVideoToVideoList(inputURL: string) {
     const instance = axios.create({
       baseURL: 'https://youtube.googleapis.com/youtube/v3',
-    });
+    }); 
   
     // referenced https://stackoverflow.com/questions/10591547/how-to-get-youtube-video-id-from-url for url parsing
     const videoid = inputURL.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
     if (videoid != null) {
       const videoID = videoid[1];
-      const KEY = 'AIzaSyARJhezhEWEFRem0f-WI76EYEgKU_CIilQ'; // need to put into .env
+      const KEY = 'AIzaSyDQwaEtCukTmxZnyQs57WJKaHPQPBRBICU'; // need to put into .env
       // const KEY = process.env.API_KEY;
       await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${KEY}`).then((response) => {
         try {
@@ -300,7 +300,9 @@ const VideoListWidget: React.FunctionComponent = () => {
           const {duration} = response.data.items[0].contentDetails;
           const formattedDuration = formatDuration(duration);
           const newVideo: YTVideo = {url: inputURL, title, channel: channelTitle, duration:formattedDuration};
-          videoList.push(newVideo); // DEPENDS ON NEW DATA STRUCTURE CREATED
+          if (!videoList.find(video => video.url === newVideo.url)) {
+            videoList.push(newVideo); // DEPENDS ON NEW DATA STRUCTURE CREATED
+          }
         } catch (error) {
           throw Error('Unable to added video'); // maybe have return -1, instead of throw errors. Then server can send -1, thus can mean certain toast shows error message
         }
