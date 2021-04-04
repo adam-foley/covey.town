@@ -20,7 +20,7 @@ import NearbyPlayersContext from './contexts/NearbyPlayersContext';
 import AppStateProvider, { useAppState } from './components/VideoCall/VideoFrontend/state';
 import useConnectionOptions from './components/VideoCall/VideoFrontend/utils/useConnectionOptions/useConnectionOptions';
 import UnsupportedBrowserWarning
-  from './components/VideoCall/VideoFrontend/components/UnsupportedBrowserWarning/UnsupportedBrowserWarning';
+from './components/VideoCall/VideoFrontend/components/UnsupportedBrowserWarning/UnsupportedBrowserWarning';
 import { VideoProvider } from './components/VideoCall/VideoFrontend/components/VideoProvider';
 import ErrorDialog from './components/VideoCall/VideoFrontend/components/ErrorDialog/ErrorDialog';
 import theme from './components/VideoCall/VideoFrontend/theme';
@@ -291,9 +291,10 @@ const VideoListWidget: React.FunctionComponent = () => {
     const videoid = inputURL.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
     if (videoid != null) {
       const videoID = videoid[1];
-      const KEY = 'AIzaSyDQwaEtCukTmxZnyQs57WJKaHPQPBRBICU'; // need to put into .env
-      // const KEY = process.env.API_KEY;
-      await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${KEY}`).then((response) => {
+
+      const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
+
+      await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${YOUTUBE_API_KEY}`).then((response) => {
         try {
           const {title} = response.data.items[0].snippet;
           const {channelTitle} = response.data.items[0].snippet;
@@ -307,10 +308,10 @@ const VideoListWidget: React.FunctionComponent = () => {
           throw Error('Unable to added video'); // maybe have return -1, instead of throw errors. Then server can send -1, thus can mean certain toast shows error message
         }
       }).catch(() => {
-        throw Error('Unable to added video');
+        throw Error('Unable to add video');
       });
     } else {
-      throw Error('Unable to use given video url');
+      throw Error('Invalid video URL');
     } 
   };
 
