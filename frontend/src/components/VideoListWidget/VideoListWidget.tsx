@@ -137,7 +137,7 @@ export default function VideoListWidget(): JSX.Element {
             Submit New Video
           </Button>
         </Stack>
-        {enteredTVAreaToast}
+        {{enteredTVAreaToast} /* This toast shouldn't work because it would be called on re-render */}
       </form>
     : null } </>
   );
