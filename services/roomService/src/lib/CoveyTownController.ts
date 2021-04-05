@@ -265,6 +265,11 @@ export default class CoveyTownController {
     }
   }
 
+  pauseNotify(pausedPlayer: Player): void {
+    const playerName = pausedPlayer.userName;
+    this._listenersInTVAreaMap.forEach((listener) => listener.onPlayerPausedNotify(playerName));
+  }
+
   syncVideos(): void {
 
     // If video is playing, update master time
@@ -297,6 +302,11 @@ export default class CoveyTownController {
       // Create a new timer to track time elapsed after play is hit
       this._currentTimer = this.createTimer();
     }
+  }
+
+  playNotify(playedPlayer: Player): void {
+    const playerName = playedPlayer.userName;
+    this._listenersInTVAreaMap.forEach((listener) => listener.onPlayerPlayedNotify(playerName));
   }
 
   // Andrew - if player is first to enter, then emit message to client to play default video. 
@@ -474,7 +484,7 @@ export default class CoveyTownController {
     return formattedTime;
   }
 
-  async addVideoToVideoList(inputURL: string) {
+  async addVideoToVideoList(inputURL: string, listenerSubmittedBy: CoveyTownListener) : Promise<void> {
     const instance = axios.create({
       baseURL: 'https://youtube.googleapis.com/youtube/v3',
     });
@@ -498,25 +508,19 @@ export default class CoveyTownController {
           });
         } catch (error) {
           console.log('Unable to add new proposed video');
-          this._listenersInTVAreaMap.forEach((listener) => {
-            listener.onUnableToAddVideo();
-          });
+          listenerSubmittedBy.onUnableToAddVideo();
         }
       }).catch(() => {
         console.log('Also unable to add new proposed video');
-        this._listenersInTVAreaMap.forEach((listener) => {
-          listener.onUnableToAddVideo();
-        });
+        listenerSubmittedBy.onUnableToAddVideo();
       });
     } else {
       console.log('Cannot use given URL');
-      this._listenersInTVAreaMap.forEach((listener) => {
-        listener.onUnableToUseURL();
-      });
+      listenerSubmittedBy.onUnableToUseURL();
     } 
   }
 
-  checkNewURLValidity(videoURL: string) {
+  checkNewURLValidity(videoURL: string, listenerSubmittedBy: CoveyTownListener) {
     console.log('Proposed URL:', videoURL);
     let unseenURLBefore = true;
     this._videoList.forEach((video) => {
@@ -525,7 +529,7 @@ export default class CoveyTownController {
       }
     });
     if (unseenURLBefore) {
-      this.addVideoToVideoList(videoURL);
+      this.addVideoToVideoList(videoURL, listenerSubmittedBy);
     }
   }
 }
