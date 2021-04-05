@@ -196,6 +196,11 @@ describe('CoveyTownController', () => {
 
     });
   });
+
+
+
+
+
   describe('townSubscriptionHandler', () => {
     const mockSocket = mock<Socket>();
     let testingTown: CoveyTownController;
@@ -218,6 +223,14 @@ describe('CoveyTownController', () => {
       townSubscriptionHandler(mockSocket);
       expect(mockSocket.disconnect).toBeCalledWith(true);
     });
+
+
+
+
+
+
+
+
     describe('with a valid session token', () => {
       it('should add a town listener, which should emit "newPlayer" to the socket when a player joins', async () => {
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
@@ -296,6 +309,31 @@ describe('CoveyTownController', () => {
           fail('No playerMovement handler registered');
         }
       });
+
+      /**
+       * should not forward clientPlayed, clientPaused, clientPlayed, clientEnteredTVArea, clientSynced, 
+       * clientLeftTVArea, clientVoted, clientProposedNewURL from socket to unsubscribed listeners of
+       * clients who are not in the TV area
+       */
+      
+      it('should forward clientPaused events from the socket to subscribed listeners', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        const mockListener = mock<CoveyTownListener>();
+        testingTown.addTownListener(mockListener);
+        // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
+        const playerPausedHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientPaused');
+        if (playerPausedHandler && playerPausedHandler[1]) {
+          const locationInTVArea = generateTestLocation();
+          player.location = locationInTVArea;
+          playerPausedHandler[1](locationInTVArea);
+          expect(mockListener.onPlayerPaused).toHaveBeenCalledWith(player);
+        } else {
+          fail('No playerPaused handler registered');
+        }
+      });
+
     });
   });
+
 });
