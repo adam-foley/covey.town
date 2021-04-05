@@ -58,8 +58,45 @@ export default function VideoListWidget(): JSX.Element {
     });
     socket?.on('displayVotingWidget', () => {
       setShowWidget(true);
+    });
+    socket?.on('addedVideo', () => {
+      toast({
+        title: `Submitted Youtube video was added to the list`,
+        status: 'success',
+        isClosable: true,
+        duration: 5000,
+      });
+    });
+    socket?.on('unableToAddVideo', () => {
+      toast({
+        title: `Looks like something went wrong:`,
+        description: `Unable to add submitted Youtube video`,
+        status: 'error',
+        isClosable: true,
+        duration: 5000,
+      })
+    });
+    socket?.on('unableToUseURL', () => {
+      toast({
+        title: `Looks like something went wrong:`,
+        description: `Unable to use submitted URL to retrieve Youtube video`,
+        status: 'error',
+        isClosable: true,
+        duration: 5000,
+      })
     })
-  },[socket]); // handleAddNewURL, handleForceUpdate]);
+  },[socket, toast]); // handleAddNewURL, handleForceUpdate]);
+
+
+  const enteredTVAreaToast = () => {
+    toast({
+      title: `You've entered the TV Area!`,
+      description: `Please scroll down to view the Youtube Player. Click 'Join Stream' to start watching! Leave anytime by walking out of the TV Area`,
+      status: 'info',
+      isClosable: true,
+      duration: 10000,
+    })
+  };
 
   // Joe - for new url submission. Check if URL is valid. If not say not added, if yes add it. Need to get youtube title, channel, duration using youtube api
   // Andrew - Only display if showYTPlayer is true (when player is by TV)
@@ -68,7 +105,9 @@ export default function VideoListWidget(): JSX.Element {
       <form>
         <Stack>
             <HStack spacing="500px">
-            <Heading p="5" as="h5" size="md">Select a video to watch</Heading>
+            <Heading p="5" as="h5" size="md">Select A Video To Watch Next</Heading>
+            <Heading p="5" as="h5" size="xs">Vote for the next video by clicking the video`s corresponding Play Next button</Heading>
+            <Heading p="5" as="h5" size="xs">Then submit your vote</Heading>
             <Button colorScheme="blue" disabled={votingButtonDisabled} onClick={() => {
                 socket?.emit('clientVoted', radioButtonState);
                 setVotingButtonDisabled(true);
@@ -76,7 +115,7 @@ export default function VideoListWidget(): JSX.Element {
             </HStack>
           <Box maxH="400px" overflowY="scroll" borderWidth="1px" borderRadius="lg">
             <Table>
-              <Thead><Tr><Th>Video Title</Th><Th>Creator</Th><Th>Duration</Th><Th>Vote on next video</Th></Tr></Thead>
+              <Thead><Tr><Th>Video Title</Th><Th>Channel</Th><Th>Duration</Th><Th>Vote For Next Video</Th></Tr></Thead>
                 <Tbody>
                   {listVideos()}
                 </Tbody>
@@ -84,7 +123,7 @@ export default function VideoListWidget(): JSX.Element {
           </Box>
 
           <FormControl id="email">
-            <FormLabel p="5" as="h5" size="md">Submit new video to you would like to watch</FormLabel>
+            <FormLabel p="5" as="h5" size="md">Submit New Video You Would Like To Watch</FormLabel>
             <Input name="newVideo" placeholder="Youtube URL" onChange={event => setNewVideoURL(event.target.value)}/>
             <FormHelperText>Please enter in the Youtube URL.</FormHelperText>
           </FormControl>
@@ -98,6 +137,7 @@ export default function VideoListWidget(): JSX.Element {
             Submit New Video
           </Button>
         </Stack>
+        {enteredTVAreaToast}
       </form>
     : null } </>
   );
