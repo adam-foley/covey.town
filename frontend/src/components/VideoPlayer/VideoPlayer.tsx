@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import YouTube from 'react-youtube';
 import { YouTubePlayer } from 'youtube-player/dist/types'; 
-import { Button, HStack } from '@chakra-ui/react';
+import { Button, HStack, useToast } from '@chakra-ui/react';
 import { YoutubeVideoInfo } from '../../CoveyTypes';
 import useCoveyAppState from '../../hooks/useCoveyAppState';
 
 const { log } = console;
 
 export default function VideoPlayer(): JSX.Element {
+  const toast = useToast();
   const {
     showYTPlayer, socket
   } = useCoveyAppState();
@@ -22,9 +23,25 @@ export default function VideoPlayer(): JSX.Element {
     socket?.on('playerPaused', () => {
         playerRef.current?.internalPlayer.pauseVideo();
     });
+    socket?.on('playerPausedNotify', (pausedPlayer: string) => {
+      toast({
+        title: `Youtube Player has been paused by ${pausedPlayer}`,
+        status: 'info',
+        isClosable: true,
+        duration: 2000,
+      });
+    });
     // Andrew - listens for server saying someone played video
     socket?.on('playerPlayed', () => {
         playerRef.current?.internalPlayer.playVideo();
+    });
+    socket?.on('playerPlayedNotify', (playedPlayer: string) => {
+      toast({
+        title: `Youtube Player has been started by ${playedPlayer}`,
+        status: 'info',
+        isClosable: true,
+        duration: 2000,
+      });
     });
     // Andrew - listens for server telling client to load a certain video at certain timestamp
     socket?.on('videoSynchronization', (currentVideoInfo: YoutubeVideoInfo) => {
@@ -39,7 +56,7 @@ export default function VideoPlayer(): JSX.Element {
     socket?.on('disablePlayPauseButtons', () => {
         setArePlayPausedDisabled(true);
     });
-  },[socket]);
+  },[socket, toast]);
   
   return (<div>
     { showYTPlayer ? <div> <div style={{position: 'absolute', zIndex: 300000, height: '200px', width: '400px'}}> </div> <div> <YouTube
