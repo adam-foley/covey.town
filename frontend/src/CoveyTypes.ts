@@ -28,4 +28,10 @@ export type CoveyAppState = {
   emitMovement: (location: UserLocation) => void,
   socket: Socket | null,
   apiClient: TownsServiceClient,
+  showYTPlayer: boolean, // Andrew TODO
 };
+export type YoutubeVideoInfo = {
+  url: string;
+  timestamp: number;
+  isPlaying: boolean;
+}
