@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading, useToast, useForceUpdate, HStack } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Text, Th, Thead, Tr, Radio, Heading, useToast, useForceUpdate, HStack } from '@chakra-ui/react';
 import useCoveyAppState from '../../hooks/useCoveyAppState';
 
 type YTVideo = {
@@ -105,15 +105,16 @@ export default function VideoListWidget(): JSX.Element {
       <form>
         <Stack>
             <HStack spacing="500px">
-            <Heading p="5" as="h5" size="md">Select A Video To Watch Next</Heading>
-            <Heading p="5" as="h5" size="xs">Vote for the next video by clicking the video`s corresponding Play Next button</Heading>
-            <Heading p="5" as="h5" size="xs">Then submit your vote</Heading>
-            <Button colorScheme="blue" disabled={votingButtonDisabled} onClick={() => {
+              <Heading p="5" size="lg">Select A Video To Watch Next</Heading>
+              <Button colorScheme="blue" disabled={votingButtonDisabled} onClick={() => {
                 socket?.emit('clientVoted', radioButtonState);
                 setVotingButtonDisabled(true);
             }}>Submit Your Only Vote For Next Video</Button>
             </HStack>
+            <Text fontSize="sm" align="center">Vote for the next video by clicking the video`s corresponding 
+            Play Next button before the current video ends. Then submit your vote</Text>
           <Box maxH="400px" overflowY="scroll" borderWidth="1px" borderRadius="lg">
+            <Heading p="5" size="md">Videos</Heading>
             <Table>
               <Thead><Tr><Th>Video Title</Th><Th>Channel</Th><Th>Duration</Th><Th>Vote For Next Video</Th></Tr></Thead>
                 <Tbody>
@@ -122,12 +123,12 @@ export default function VideoListWidget(): JSX.Element {
             </Table>
           </Box>
 
-          <FormControl id="email">
-            <FormLabel p="5" as="h5" size="md">Submit New Video You Would Like To Watch</FormLabel>
-            <Input name="newVideo" placeholder="Youtube URL" onChange={event => setNewVideoURL(event.target.value)}/>
+          <FormControl id="submitURL">
+          <FormLabel p="5">Submit new video to you would like to watch</FormLabel>
+            <Input name="newVideo" placeholder="Youtube URL" width="600px" onChange={event => setNewVideoURL(event.target.value)}/>
             <FormHelperText>Please enter in the Youtube URL.</FormHelperText>
           </FormControl>
-          <Button colorScheme="blue" 
+          <Button size="md" width="150px" colorScheme="blue" 
             onClick={() => {
                 // should send the URL to the server to check if it is valid
                 socket?.emit('clientProposedNewURL', newVideoURL);
