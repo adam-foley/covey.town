@@ -5,6 +5,7 @@ import TwilioVideo from './TwilioVideo';
 import Player from '../types/Player';
 import CoveyTownController from './CoveyTownController';
 import CoveyTownListener from '../types/CoveyTownListener';
+import {UserLocation} from '../CoveyTypes';
 import PlayerSession from '../types/PlayerSession';
 import {townSubscriptionHandler} from '../requestHandlers/CoveyTownRequestHandlers';
 import CoveyTownsStore from './CoveyTownsStore';
@@ -19,14 +20,14 @@ TwilioVideo.getInstance = () => ({
   getTokenForTown: mockGetTokenForTown,
 });
 
-// function generateTestLocation(): UserLocation {
-//   return {
-//     rotation: 'back',
-//     moving: Math.random() < 0.5,
-//     x: Math.floor(Math.random() * 100),
-//     y: Math.floor(Math.random() * 100),
-//   };
-// }
+function generateTestLocation(): UserLocation {
+  return {
+    rotation: 'back',
+    moving: Math.random() < 0.5,
+    x: Math.floor(Math.random() * 100),
+    y: Math.floor(Math.random() * 100),
+  };
+}
 
 // /**
 //  * WARNING: HARDCODED
