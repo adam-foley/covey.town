@@ -195,9 +195,17 @@ function townSocketAdapter(socket: Socket): CoveyTownListener {
     onPlayerPaused() {
       socket.emit('playerPaused');
     },
+
+    onPlayerPausedNotify(pausedPlayerName: string) {
+      socket.emit('playerPausedNotify', pausedPlayerName);
+    },
     // Andrew - emits message to client to play video
     onPlayerPlayed() {
       socket.emit('playerPlayed');
+    },
+
+    onPlayerPlayedNotify(playedPlayerName: string) {
+      socket.emit('playerPlayedNotify', playedPlayerName);
     },
     // Andrew - emits message to client to sync up youtube player with given video info
     onVideoSyncing(videoInfo: YoutubeVideoInfo) {
@@ -278,6 +286,7 @@ export function townSubscriptionHandler(socket: Socket): void {
   socket.on('clientPaused', () => {
     console.log('the player paused');
     townController.pauseVideos();
+    townController.pauseNotify(s.player);
   });
 
   // Andrew - Register an event listener for the client socket: if client played video then
@@ -285,6 +294,7 @@ export function townSubscriptionHandler(socket: Socket): void {
   socket.on('clientPlayed', () => {
     console.log('the player played');
     townController.playVideos();
+    townController.playNotify(s.player);
   });
 
   // Andrew - Register an event listener for the client socket: if client enters TV area then
@@ -319,6 +329,6 @@ export function townSubscriptionHandler(socket: Socket): void {
   // Andrew - Register an event listener for the client socket: if a client submits a new URL, then controller
   // should check if it is a valid URL before having all clients add it to their list of videos they can vote for
   socket.on('clientProposedNewURL', (videoURL: string) => {
-    townController.checkNewURLValidity(videoURL);
+    townController.checkNewURLValidity(videoURL, listener);
   });
 }
