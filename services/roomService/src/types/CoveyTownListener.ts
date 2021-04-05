@@ -32,8 +32,12 @@ export default interface CoveyTownListener {
   // Andrew - called when another client paused and this client should pause their video
   onPlayerPaused(): void;
 
+  onPlayerPausedNotify(pausedPlayerName: string): void;
+
   // Andrew - called when another client played and this client should play their video
   onPlayerPlayed(): void;
+
+  onPlayerPlayedNotify(playedPlayerName: string): void;
 
   // Andrew - called when this player should sync their youtube player up with whatever the most recent video is
   onVideoSyncing(videoInfo: YoutubeVideoInfo): void;
