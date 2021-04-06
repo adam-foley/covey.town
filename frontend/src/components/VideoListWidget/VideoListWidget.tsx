@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Th, Thead, Tr, Radio, Heading, useToast, HStack } from '@chakra-ui/react';
+import { Box, Button, FormControl, FormHelperText, FormLabel, Input, Stack, Table, Tbody, Td, Text, Th, Thead, Tr, Radio, Heading, useToast, HStack } from '@chakra-ui/react';
 import useCoveyAppState from '../../hooks/useCoveyAppState';
 
 type YTVideo = {
@@ -10,10 +10,10 @@ type YTVideo = {
 }
 
 export default function VideoListWidget(): JSX.Element {
-    // Andrew - use hook so Widget only renders when near TV and also so that we have access to socket to emit messages
-    const {
-        showYTPlayer, socket
-    } = useCoveyAppState();
+  // Andrew - use hook so Widget only renders when near TV and also so that we have access to socket to emit messages
+  const {
+    showYTPlayer, socket
+  } = useCoveyAppState();
 
   const toast = useToast();
   const [newVideoURL, setNewVideoURL] = useState('');
@@ -87,13 +87,16 @@ export default function VideoListWidget(): JSX.Element {
       <form>
         <Stack>
             <HStack spacing="500px">
-            <Heading p="5" as="h5" size="md">Select A Video To Watch Next</Heading>
+            <Heading p="5" size="lg">Select A Video To Watch Next</Heading>
             <Button colorScheme="blue" disabled={votingButtonDisabled} onClick={() => {
                 socket?.emit('clientVoted', radioButtonState);
                 setVotingButtonDisabled(true);
-            }}>Submit Your Only Vote For Next Video</Button>
+            }}>Submit Vote</Button>
             </HStack>
-          <Box maxH="400px" overflowY="scroll" borderWidth="1px" borderRadius="lg">
+            <Text fontSize="sm" align="center">Vote for the next video by clicking the video`s corresponding 
+            Play Next button before the current video ends. Then submit your only vote for the next video.</Text>
+          <Box maxH="300px" overflowY="scroll" borderWidth="1px" borderRadius="lg">
+            <Heading p="5" size="md">Videos</Heading>
             <Table>
               <Thead><Tr><Th>Video Title</Th><Th>Channel</Th><Th>Duration</Th><Th>Vote For Next Video</Th></Tr></Thead>
                 <Tbody>
@@ -102,12 +105,12 @@ export default function VideoListWidget(): JSX.Element {
             </Table>
           </Box>
 
-          <FormControl id="email">
-            <FormLabel p="5" as="h5" size="md">Submit New Video You Would Like To Watch</FormLabel>
-            <Input name="newVideo" placeholder="Youtube URL" onChange={event => setNewVideoURL(event.target.value)}/>
+          <FormControl id="submitURL">
+            <FormLabel p="5">Submit New Video You Would Like To Watch</FormLabel>
+            <Input name="newVideo" placeholder="Youtube URL" width="600px" onChange={event => setNewVideoURL(event.target.value)}/>
             <FormHelperText>Please enter in the Youtube URL.</FormHelperText>
           </FormControl>
-          <Button colorScheme="blue" 
+          <Button size="md" width="150px" colorScheme="blue" 
             onClick={() => {
                 // send the URL to the server to check if it is valid
                 // Andrew - the re-rendering is handled when the socket receives the URL from the server if it's valid

@@ -23,7 +23,7 @@ const video2: YTVideo = {
   url: 'https://www.youtube.com/watch?v=YqeW9_5kURI',
   title: 'Major Lazer & DJ Snake - Lean On (feat. MØ) (Official Music Video)',
   channel: 'Major Lazer',
-  duration: '2:59',
+  duration: '02:59',
 };
 videoList.push(video2);
 
@@ -31,7 +31,7 @@ const video3: YTVideo = {
   url: 'https://www.youtube.com/watch?v=1GnpegxJRYk',
   title: 'Erik Myers - Taco Bell Application (Stand-up Clip)',
   channel: 'Laugh Factory',
-  duration: '2:20',
+  duration: '02:20',
 };
 videoList.push(video3);
 
@@ -63,7 +63,7 @@ const video7: YTVideo = {
   url: 'https://www.youtube.com/watch?v=cg1rtWXHSKU',
   title: 'Captain America vs Ultron - Fight Scene - Avengers: Age of Ultron - Movie CLIP HD',
   channel: 'TopMovieClips',
-  duration: '3:52',
+  duration: '03:52',
 };
 videoList.push(video7);
 

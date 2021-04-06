@@ -16,28 +16,35 @@ export default function VideoPlayer(): JSX.Element {
 
   const [arePlayPauseDisabled, setArePlayPausedDisabled] = useState<boolean>(true);
   const toast = useToast();
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
 
   useEffect(() => {
     // socket?.emit('clientEnteredTVArea');
     // Andrew - listens for server saying someone paused video
     socket?.on('playerPaused', () => {
         playerRef.current?.internalPlayer.pauseVideo();
+        setIsPlaying(false);
     });
     // Andrew - listens for server saying someone played video
     socket?.on('playerPlayed', () => {
         playerRef.current?.internalPlayer.playVideo();
+        setIsPlaying(true);
     });
     // Andrew - listens for server telling client to load a certain video at certain timestamp
     socket?.on('videoSynchronization', (currentVideoInfo: YoutubeVideoInfo) => {
         const vidID = currentVideoInfo.url.split('=')[currentVideoInfo.url.split('=').length - 1];
         playerRef.current?.internalPlayer.loadVideoById(vidID, currentVideoInfo.timestamp);
+        setIsPlaying(true);
         if (!currentVideoInfo.isPlaying) {
           playerRef.current?.internalPlayer.pauseVideo();
+          setIsPlaying(false);
         }
     });
     // Andrew - listens for server re-enabling client's "Join Stream" button
     socket?.on('disablePlayPauseButtons', () => {
         setArePlayPausedDisabled(true);
+        setIsMuted(false);
     });
   },[socket]);
 
@@ -61,9 +68,23 @@ export default function VideoPlayer(): JSX.Element {
       <div>
         <HStack spacing="82px">
           { !arePlayPauseDisabled ? <div>
-          <Button colorScheme="blue" disabled={arePlayPauseDisabled} onClick={() => socket?.emit('clientPlayed')}>Play</Button>
-          <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => socket?.emit('clientPaused')}>Pause</Button>
+          <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => {
+            if (isPlaying) {
+              socket?.emit('clientPaused');
+            } else {
+              socket?.emit('clientPlayed');
+            }
+            }}>Play/Pause</Button>
           <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => socket?.emit('clientSynced')}>Sync</Button>
+          <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => {
+            if (isMuted) {
+              playerRef.current?.internalPlayer.unMute();
+              setIsMuted(false);
+            } else {
+              playerRef.current?.internalPlayer.mute();
+              setIsMuted(true);
+            }
+            }}>Mute/Unmute</Button>
           </div> : null }
           { arePlayPauseDisabled ? <div>
           <Button colorScheme="blue" disabled={!arePlayPauseDisabled} type="submit" onClick={() => {
