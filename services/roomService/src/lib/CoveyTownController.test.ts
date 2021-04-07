@@ -152,17 +152,17 @@ describe('CoveyTownController', () => {
 
     });
 
-    it('should notify added listeners that a client paused the video when pauseVideos is called', async () => {
-      const player = new Player('test player');
-      player.location = generateLocationInTVArea();
-      await testingTown.addPlayer(player);
-      mockListeners.forEach(listener => testingTown.addTownListener(listener));
-      await testingTown.addToTVArea(player, mockListeners[0]);
-      testingTown.playVideos();
-      testingTown.pauseVideos();
-      testingTown.syncVideos();
-      mockListeners.forEach(listener => expect(listener.onPlayerPlayed).toBeCalled());
-    });
+    // it('should notify added listeners that a client paused the video when pauseVideos is called', async () => {
+    //   const player = new Player('test player');
+    //   player.location = generateLocationInTVArea();
+    //   await testingTown.addPlayer(player);
+    //   mockListeners.forEach(listener => testingTown.addTownListener(listener));
+    //   await testingTown.addToTVArea(player, mockListeners[0]);
+    //   testingTown.playVideos();
+    //   testingTown.pauseVideos();
+    //   testingTown.syncVideos();
+    //   mockListeners.forEach(listener => expect(listener.onPlayerPlayed).toBeCalled());
+    // });
 
     it('should not notify removed listeners of player movement when updatePlayerLocation is called', async () => {
       const player = new Player('test player');
