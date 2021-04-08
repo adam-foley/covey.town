@@ -10,7 +10,8 @@ import PlayerSession from '../types/PlayerSession';
 import {townSubscriptionHandler} from '../requestHandlers/CoveyTownRequestHandlers';
 import CoveyTownsStore from './CoveyTownsStore';
 import * as TestUtils from '../client/TestUtils';
-import { EXPECTATION_FAILED } from 'http-status-codes';
+import rewire from 'rewire';
+import axios from 'axios';
 
 jest.mock('./TwilioVideo');
 
@@ -257,6 +258,395 @@ describe('CoveyTownController', () => {
         expect(townController.destroyTimer).not.toBeCalled();
       });
   });
+  describe('syncVideos', () => { // ANDREW
+    it('should call pauseVideos if there is a timer',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.playVideos(); // creates a timer so that first if-block runs 
+        townController.pauseVideos = jest.fn();
+        townController.syncVideos();
+        expect(townController.pauseVideos).toBeCalled();
+        townController.destroyTimer();
+      });
+    it('should call playVideos if there is a timer',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.playVideos(); // creates a timer
+        townController.playVideos = jest.fn();
+        townController.syncVideos();
+        expect(townController.playVideos).toHaveBeenCalledTimes(1);
+        townController.destroyTimer();
+      });
+    it('should not call pauseVideos if there is not a timer',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.pauseVideos = jest.fn();
+        townController.syncVideos();
+        expect(townController.pauseVideos).not.toBeCalled();
+      });
+    it('should not call playVideos if there is not a timer',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.playVideos = jest.fn();
+        townController.syncVideos();
+        expect(townController.playVideos).not.toBeCalled();
+      });
+  });
+  describe('playVideos', () => { // ANDREW
+    it('should create a timer if there is not a timer beforehand',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        jest.useFakeTimers();
+        townController.createTimer = jest.fn();
+        townController.playVideos();
+        expect(townController.createTimer).toBeCalled();
+        expect(townController["_currentTimer"]).not.toBeNull();
+      });
+    it('should not create a timer if there is a timer beforehand',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        jest.useFakeTimers();
+        townController.playVideos(); // this call creates the timer 
+        townController.createTimer = jest.fn();
+        townController.playVideos(); // this call is for actually testing funtionality after a timer exists
+        expect(townController.createTimer).not.toBeCalled();
+        expect(townController["_currentTimer"]).not.toBeNull();
+      });
+  });
+  describe('addToTVArea', () => { // ANDREW
+    it('should add new player and listener to listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const newPlayer = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController.addToTVArea(newPlayer, mockListener);
+        expect(townController["_listenersInTVAreaMap"].entries()).toContainEqual([newPlayer, mockListener]);
+      });
+    it('should create a timer if there is no timer beforehand and only one person added to listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const newPlayer = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController.addToTVArea(newPlayer, mockListener);
+        expect(townController["_currentTimer"]).not.toBeNull();
+        expect(setTimeout).toBeCalled();
+      });
+    it('should not create a new timer if there is a timer beforehand',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const newPlayer = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController.playVideos(); // creates a timer
+        townController.createTimer = jest.fn();
+        townController.addToTVArea(newPlayer, mockListener);
+        expect(townController.createTimer).not.toBeCalled();
+      });
+    it('should not create a new timer if there is not a timer beforehand and listenersInTVAreaMap has size > 1',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const originalPlayer = new Player('added to map');
+        const originalMockListener = mock<CoveyTownListener>();
+        const newPlayer = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(originalPlayer, originalMockListener);
+        townController.createTimer = jest.fn();
+        townController.addToTVArea(newPlayer, mockListener);
+        expect(townController.createTimer).not.toBeCalled();
+      });
+  });
+  describe('removeFromTVArea', () => { // ANDREW
+    it('should remove player and listener from listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController.removeFromTVArea(player);
+        expect(townController["_listenersInTVAreaMap"].entries()).not.toContainEqual([player, mockListener]);
+      });
+    it('should destroy timer if no more people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController.destroyTimer = jest.fn();
+        townController.removeFromTVArea(player);
+        expect(townController.destroyTimer).toBeCalled();
+      });
+    it('should not destroy timer if people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        const extraPlayer = new Player('added to map');
+        const extraMockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController["_listenersInTVAreaMap"].set(extraPlayer, extraMockListener);
+        townController.destroyTimer = jest.fn();
+        townController.removeFromTVArea(player);
+        expect(townController.destroyTimer).not.toBeCalled();
+      });
+    it('should set masterTimeElapsed to zero if no more people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController["_masterTimeElapsed"] = 10;
+        townController.removeFromTVArea(player);
+        expect(townController["_masterTimeElapsed"]).toBe(0);
+      });
+    it('should set videoList to default video list if no more people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController["_videoList"] = [];
+        townController.removeFromTVArea(player);
+        expect(townController["_videoList"]).toHaveLength(10);
+      });
+    it('should reset defaultVideoInfo if no more people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController["_defaultVideoInfo"] = {
+          url: '',
+          timestamp: 100,
+          isPlaying: false,
+        };
+        townController.removeFromTVArea(player);
+        expect(townController["_defaultVideoInfo"].url).not.toHaveLength(0);
+        expect(townController["_defaultVideoInfo"].timestamp).toBe(0);
+        expect(townController["_defaultVideoInfo"].isPlaying).toBe(true);
+      });
+    it('should set currentVideoInfo to defaultVideoInfo if no more people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        townController["_currentVideoInfo"] = {
+          url: '',
+          timestamp: 100,
+          isPlaying: false,
+        };
+        townController.removeFromTVArea(player);
+        expect(townController["_currentVideoInfo"]).toStrictEqual(townController["_defaultVideoInfo"]);
+      });
+    it('should set masterVideoLength if no more people left in listenersInTVAreaMap',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const player = new Player('added to map');
+        const mockListener = mock<CoveyTownListener>();
+        townController["_listenersInTVAreaMap"].set(player, mockListener);
+        const potentialDurations = townController["_defaultVideoList"].map((video) => {
+          const videoHoursMinutesSeconds = video.duration.split(':');
+          let vidDurationSeconds;
+          if (videoHoursMinutesSeconds.length === 3) {
+            vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
+          } else {
+            vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
+          }
+          return vidDurationSeconds;
+        })
+        townController.removeFromTVArea(player);
+        expect(potentialDurations).toContainEqual(townController["_masterVideoLength"]);
+      });
+  });
+  describe('chooseNextVideo', () => { // ANDREW
+    it('should destroy current timer',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.destroyTimer = jest.fn();
+        townController.chooseNextVideo();
+        expect(townController.destroyTimer).toBeCalled();
+      });
+    it('should set masterTimeElapsed to 0',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_masterTimeElapsed"] = 100;
+        townController.chooseNextVideo();
+        expect(townController["_masterTimeElapsed"]).toBe(0);
+      });
+    it('should set masterVideoLength to duration in videoList with most votes',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set(townController["_defaultVideoList"][0].url, 1);
+        const videoHoursMinutesSeconds = townController["_defaultVideoList"][0].duration.split(':');
+        let vidDurationSeconds;
+        if (videoHoursMinutesSeconds.length === 3) {
+          vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
+        } else {
+          vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
+        }
+        townController.chooseNextVideo();
+        expect(townController["_masterVideoLength"]).toBe(vidDurationSeconds);
+      });
+    it('should set currentVideoInfo url based on video in videoList with most votes',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set(townController["_defaultVideoList"][0].url, 1);
+        townController.chooseNextVideo();
+        expect(townController["_currentVideoInfo"].url).toStrictEqual(townController["_defaultVideoList"][0].url);
+      });
+    it('should set currentVideoInfo url based on video in videoList with most votes - multiple voted urls',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set(townController["_defaultVideoList"][0].url, 1);
+        townController["_videoURLVotes"].set(townController["_defaultVideoList"][1].url, 2);
+        townController.chooseNextVideo();
+        expect(townController["_currentVideoInfo"].url).toStrictEqual(townController["_defaultVideoList"][1].url);
+      });
+    it('should create new currentTimer',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.createTimer = jest.fn();
+        townController.chooseNextVideo();
+        expect(townController.createTimer).toBeCalled();
+        expect(townController["_currentTimer"]).not.toBeNull();
+      });
+    it('should reset videoURLVotes',
+      () => {
+        jest.useFakeTimers();
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set(townController["_defaultVideoList"][0].url, 1);
+        townController["_videoURLVotes"].set(townController["_defaultVideoList"][1].url, 2);
+        townController.chooseNextVideo();
+        expect(townController["_videoURLVotes"].size).toBe(0);
+      });
+  });
+  describe('voteForVideo', () => { // ANDREW
+    it('should add vote for URL that has not been seen before',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController.voteForVideo('testURL');
+        expect(townController["_videoURLVotes"].get('testURL')).toBe(1);
+      });
+    it('should add vote for URL that has been seen before',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set('testURL', 1);
+        townController.voteForVideo('testURL');
+        expect(townController["_videoURLVotes"].get('testURL')).toBe(2);
+      });
+    it('should add vote for correct URL where other URLs have been voted for',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set('testURL', 1);
+        townController["_videoURLVotes"].set('anotherTestURL', 5);
+        townController.voteForVideo('testURL');
+        expect(townController["_videoURLVotes"].get('testURL')).toBe(2);
+      });
+    it('should add vote for correct URL where other URLs have been voted for and URL has not been seen before',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        townController["_videoURLVotes"].set('anotherTestURL', 5);
+        townController.voteForVideo('testURL');
+        expect(townController["_videoURLVotes"].get('testURL')).toBe(1);
+      });
+  });
+  // describe('addVideoToVideoList', () => { // ANDREW - Have not figured out proper way to mock axios and return right data
+  //   it('should add URL to videoList if approved',
+  //     async () => {
+  //       const townName = `FriendlyNameTest-${nanoid()}`;
+  //       const townController = new CoveyTownController(townName, false);
+  //       jest.mock('axios');
+  //       // const mockedAxios = axios as jest.Mocked<typeof axios>
+  //       const mock = jest.spyOn(axios, 'get');
+  //       const vidData = {items: [{snippet: 'fake title', contentDetails: 'PT3M21S'}]};
+  //       const vidResponse = {data: vidData};
+  //       mock.mockReturnValueOnce(() => Promise.resolve(vidResponse));
+  //       // mockedAxios.get.mockReturnValueOnce(() => Promise.resolve(vidResponse));
+  //       // axios.get.mockResolvedValue(vidResponse);
+  //       const mockListener = mock<CoveyTownListener>();
+  //       await townController.addVideoToVideoList('fakeURL', mockListener);
+  //       expect(townController["_videoList"]).toContainEqual({url: 'fakeURL', title: 'fake title', channel: 'fake title', duration: '03:21'});
+  //     });
+  // });
+  describe('checkNewURLValidity', () => { // ANDREW
+    it('should call addVideoToVideoList if URL has not been seen before',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const mockListener = mock<CoveyTownListener>();
+        townController.addVideoToVideoList = jest.fn();
+        townController.checkNewURLValidity('testURL', mockListener);
+        expect(townController.addVideoToVideoList).toBeCalled();
+      });
+    it('should not call addVideoToVideoList if URL has been seen before',
+      () => {
+        const townName = `FriendlyNameTest-${nanoid()}`;
+        const townController = new CoveyTownController(townName, false);
+        const mockListener = mock<CoveyTownListener>();
+        townController["_videoList"].push({
+          url: 'testURL',
+          title: 'test title',
+          channel: 'test channel',
+          duration: '02:35',
+        })
+        townController.addVideoToVideoList = jest.fn();
+        townController.checkNewURLValidity('testURL', mockListener);
+        expect(townController.addVideoToVideoList).not.toBeCalled();
+      });
+  });
+  // describe('formatDuration', () => { // ANDREW - have not figured out how to test un-exported function. Can't get rewire to work
+  //   it('should format time under a minute',
+  //     () => {
+  //       const app = rewire('./CoveyTownController');
+  //       const formatVidDuration = app.__get__('formatDuration');
+  //       expect(formatVidDuration('PT3M21S')).toStrictEqual('03:21');
+  //     });
+  // });
   describe('town listeners and events', () => {
     let testingTown: CoveyTownController;
     const mockListeners = [mock<CoveyTownListener>(),
@@ -416,7 +806,6 @@ describe('CoveyTownController', () => {
       testingTown.destroySession(session);
       expect(listenerRemoved.onPlayerJoined).not.toBeCalled();
     });
-
     it('should not notify removed listeners that the town is destroyed when disconnectAllPlayers is called', async () => {
       const player = new Player('test player');
       await testingTown.addPlayer(player);
@@ -426,7 +815,46 @@ describe('CoveyTownController', () => {
       testingTown.removeTownListener(listenerRemoved);
       testingTown.disconnectAllPlayers();
       expect(listenerRemoved.onTownDestroyed).not.toBeCalled();
-
+    });
+    it('should not notify listeners not in tv area that the video player is to be paused when pauseVideos is called', async () => {
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown.playVideos(); // create a timer so that pauseVideos will attempt to pause videos
+      testingTown.pauseVideos();
+      mockListeners.forEach(listener => expect(listener.onPlayerPaused).not.toBeCalled());
+    });
+    it('should not notify listeners removed from tv area that the video player is to be paused when pauseVideos is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.playVideos(); // create a timer so that pauseVideos will attempt to pause videos
+      testingTown.removeFromTVArea(player);
+      testingTown.removeFromTVArea(secondPlayer);
+      testingTown.pauseVideos();
+      mockListeners.forEach(listener => expect(listener.onPlayerPaused).not.toBeCalled());
+    });
+    it('should not notify listeners not in tv area that the video player is to be synced when playVideos is called', async () => {
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown.playVideos();
+      mockListeners.forEach(listener => expect(listener.onVideoSyncing).not.toBeCalled());
+    });
+    it('should not notify listeners removed from tv area that the video player is to be synced when playVideos is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.removeFromTVArea(player);
+      testingTown.removeFromTVArea(secondPlayer);
+      testingTown.playVideos();
+      mockListeners.forEach(listener => expect(listener.onVideoSyncing).not.toBeCalled());
     });
   });
   describe('townSubscriptionHandler', () => {
@@ -528,6 +956,19 @@ describe('CoveyTownController', () => {
         } else {
           fail('No playerMovement handler registered');
         }
+      });
+      it('should add a town listener, which should emit "playerPaused" to the socket when a player pauses when listener in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        testingTown.addToTVArea(player, testingTown["_listeners"][0]);
+        testingTown.pauseVideos();
+        expect(mockSocket.emit).toBeCalledWith('playerPaused');
+      });
+      it('should add a town listener, which should not emit "playerPaused" to the socket when a player pauses when listener not in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        testingTown.pauseVideos();
+        expect(mockSocket.emit).not.toBeCalledWith('playerPaused');
       });
     });
   });
