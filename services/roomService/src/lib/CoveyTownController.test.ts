@@ -12,6 +12,7 @@ import CoveyTownsStore from './CoveyTownsStore';
 import * as TestUtils from '../client/TestUtils';
 import rewire from 'rewire';
 import axios from 'axios';
+import { getExpectedBodyHash } from 'twilio/lib/webhooks/webhooks';
 
 jest.mock('./TwilioVideo');
 
@@ -603,14 +604,14 @@ describe('CoveyTownController', () => {
   //       jest.mock('axios');
   //       // const mockedAxios = axios as jest.Mocked<typeof axios>
   //       const mock = jest.spyOn(axios, 'get');
-  //       const vidData = {items: [{snippet: 'fake title', contentDetails: 'PT3M21S'}]};
+  //       const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
   //       const vidResponse = {data: vidData};
-  //       mock.mockReturnValueOnce(() => Promise.resolve(vidResponse));
+  //       // mock.mockReturnValueOnce(() => Promise.resolve(vidResponse));
   //       // mockedAxios.get.mockReturnValueOnce(() => Promise.resolve(vidResponse));
-  //       // axios.get.mockResolvedValue(vidResponse);
+  //       axios.get.mockResolvedValue(vidResponse);
   //       const mockListener = mock<CoveyTownListener>();
   //       await townController.addVideoToVideoList('fakeURL', mockListener);
-  //       expect(townController["_videoList"]).toContainEqual({url: 'fakeURL', title: 'fake title', channel: 'fake title', duration: '03:21'});
+  //       expect(townController["_videoList"]).toContainEqual({url: 'fakeURL', title: 'fake title', channel: 'fake channel', duration: '03:21'});
   //     });
   // });
   describe('checkNewURLValidity', () => { // ANDREW
@@ -732,19 +733,13 @@ describe('CoveyTownController', () => {
       expect(mockListeners[0].onVideoSyncing).toHaveBeenCalledTimes(2);
       expect(mockListeners[1].onVideoSyncing).toHaveBeenCalledTimes(2);
     });
-    it('should notify added listeners in tv area to be synced when addToTVArea is called', async () => {
+    it('should notify added listener in tv area to be synced when addToTVArea is called', async () => {
       const player = new Player('test player');
       await testingTown.addPlayer(player);
-      const secondPlayer = new Player('second player');
-      await testingTown.addPlayer(secondPlayer);
       
       mockListeners.forEach(listener => testingTown.addTownListener(listener));
-      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
-      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
       testingTown.addToTVArea(player, mockListeners[0]);
-      testingTown.addToTVArea(secondPlayer, mockListeners[1]);
-      expect(mockListeners[0].onVideoSyncing).toBeCalled();
-      expect(mockListeners[1].onVideoSyncing).toBeCalled();
+      expect(mockListeners[0].onVideoSyncing).toBeCalledWith(testingTown["_defaultVideoInfo"]);
     });
     it('should notify added listeners in tv area to display voting widget when addToTVArea is called', async () => {
       const player = new Player('test player');
@@ -771,9 +766,102 @@ describe('CoveyTownController', () => {
       testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
       testingTown.addToTVArea(player, mockListeners[0]);
       testingTown.addToTVArea(secondPlayer, mockListeners[1]);
-      expect(mockListeners[0].onUpdatingNextVideoOptions).toBeCalled();
-      expect(mockListeners[1].onUpdatingNextVideoOptions).toBeCalled();
+      expect(mockListeners[0].onUpdatingNextVideoOptions).toBeCalledWith(testingTown["_videoList"]);
+      expect(mockListeners[1].onUpdatingNextVideoOptions).toBeCalledWith(testingTown["_videoList"]);
     });
+    it('should notify added listeners in tv area to call onDisablePlayPause when removeFromTVArea is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.removeFromTVArea(player);
+      expect(mockListeners[0].onDisablePlayPause).toBeCalled();
+      testingTown.removeFromTVArea(secondPlayer);
+      expect(mockListeners[1].onDisablePlayPause).toBeCalled();
+    });
+    it('should notify added listeners in tv area to call onEnableVoting when removeFromTVArea is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.removeFromTVArea(player);
+      expect(mockListeners[0].onEnableVoting).toBeCalled();
+      testingTown.removeFromTVArea(secondPlayer);
+      expect(mockListeners[1].onEnableVoting).toBeCalled();
+    });
+    it('should notify added listeners in tv area to call onResetVideoOptions when removeFromTVArea is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.removeFromTVArea(player);
+      expect(mockListeners[0].onResetVideoOptions).toBeCalled();
+      testingTown.removeFromTVArea(secondPlayer);
+      expect(mockListeners[1].onResetVideoOptions).toBeCalled();
+    });
+    it('should notify added listeners in tv area to call onVideoSyncing with most highly voted video when chooseNextVideo is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown["_videoURLVotes"].set(testingTown["_defaultVideoList"][0].url, 1);
+      testingTown.chooseNextVideo();
+      expect(mockListeners[0].onVideoSyncing).toBeCalledWith({
+        url: testingTown["_defaultVideoList"][0].url,
+        timestamp: 0,
+        isPlaying: true,
+      });
+      expect(mockListeners[1].onVideoSyncing).toBeCalledWith({
+        url: testingTown["_defaultVideoList"][0].url,
+        timestamp: 0,
+        isPlaying: true,
+      });
+    });
+    it('should notify added listeners in tv area to call onEnableVoting when chooseNextVideo is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.chooseNextVideo();
+      expect(mockListeners[0].onEnableVoting).toBeCalled();
+      expect(mockListeners[1].onEnableVoting).toBeCalled();
+    });
+    it('should notify added listeners in tv area to call onUpdatingNextVideoOptions when chooseNextVideo is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.chooseNextVideo();
+      expect(mockListeners[0].onUpdatingNextVideoOptions).toBeCalledWith(testingTown["_videoList"]);
+      expect(mockListeners[1].onUpdatingNextVideoOptions).toBeCalledWith(testingTown["_videoList"]);
+    });
+    // it('should notify added listeners in tv area to call onUpdatingNextVideoOptions when addVideoToVideoList is called', async () => {
+    //   // NEED TO FIGURE OUT HOW TO MOCK AXIOS TO TEST ALL OF THE LISTENER METHODS THAT SHOULD BE CALLED AFTER SUCCESSFUL API CALL
+    // });
     it('should not notify removed listeners of player movement when updatePlayerLocation is called', async () => {
       const player = new Player('test player');
       await testingTown.addPlayer(player);
@@ -856,6 +944,29 @@ describe('CoveyTownController', () => {
       testingTown.playVideos();
       mockListeners.forEach(listener => expect(listener.onVideoSyncing).not.toBeCalled());
     });
+    it('should not notify listeners not in tv area that the video player is to be synced when syncVideos is called', async () => {
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown.playVideos();
+      testingTown.syncVideos();
+
+      mockListeners.forEach(listener => expect(listener.onVideoSyncing).not.toBeCalled());
+    });
+    it('should not notify listeners removed from tv area that the video player is to be synced when syncVideos is called', async () => {
+      const player = new Player('test player');
+      await testingTown.addPlayer(player);
+      const secondPlayer = new Player('second player');
+      await testingTown.addPlayer(secondPlayer);
+      
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+      testingTown["_listenersInTVAreaMap"].set(player, mockListeners[0]);
+      testingTown["_listenersInTVAreaMap"].set(secondPlayer, mockListeners[1]);
+      testingTown.removeFromTVArea(player);
+      testingTown.removeFromTVArea(secondPlayer);
+      testingTown.playVideos();
+      testingTown.syncVideos();
+
+      mockListeners.forEach(listener => expect(listener.onVideoSyncing).not.toBeCalled());
+    });
   });
   describe('townSubscriptionHandler', () => {
     const mockSocket = mock<Socket>();
@@ -905,6 +1016,19 @@ describe('CoveyTownController', () => {
         testingTown.disconnectAllPlayers();
         expect(mockSocket.emit).toBeCalledWith('townClosing');
         expect(mockSocket.disconnect).toBeCalledWith(true);
+      });
+      it('should add a town listener, which should emit "playerPaused" to the socket when a player pauses when listener in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        testingTown.addToTVArea(player, testingTown["_listeners"][0]);
+        testingTown.pauseVideos();
+        expect(mockSocket.emit).toBeCalledWith('playerPaused');
+      });
+      it('should add a town listener, which should not emit "playerPaused" to the socket when a player pauses when listener not in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        testingTown.pauseVideos();
+        expect(mockSocket.emit).not.toBeCalledWith('playerPaused');
       });
       describe('when a socket disconnect event is fired', () => {
         it('should remove the town listener for that socket, and stop sending events to it', async () => {
@@ -957,18 +1081,109 @@ describe('CoveyTownController', () => {
           fail('No playerMovement handler registered');
         }
       });
-      it('should add a town listener, which should emit "playerPaused" to the socket when a player pauses when listener in listenersInTVAreaMap', async () => {
+      it('should forward clientPaused events from the socket to subscribed listeners in TV area if timer exists', async () => {
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
         townSubscriptionHandler(mockSocket);
-        testingTown.addToTVArea(player, testingTown["_listeners"][0]);
-        testingTown.pauseVideos();
-        expect(mockSocket.emit).toBeCalledWith('playerPaused');
+        const mockListener = mock<CoveyTownListener>();
+        testingTown.addTownListener(mockListener);
+        const newPlayer = new Player('test player');
+        testingTown["_listenersInTVAreaMap"].set(newPlayer, mockListener);
+        testingTown.playVideos(); // creates timer so that pauseVideos actually tells listeners to pause
+        // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
+        const clientPausedHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientPaused');
+        if (clientPausedHandler && clientPausedHandler[1]) {
+          clientPausedHandler[1]();
+          expect(mockListener.onPlayerPaused).toBeCalled();
+        } else {
+          fail('No clientPaused handler registered');
+        }
       });
-      it('should add a town listener, which should not emit "playerPaused" to the socket when a player pauses when listener not in listenersInTVAreaMap', async () => {
+      it('should not forward clientPaused events from the socket to subscribed listeners in TV area if timer does not exists', async () => {
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
         townSubscriptionHandler(mockSocket);
-        testingTown.pauseVideos();
-        expect(mockSocket.emit).not.toBeCalledWith('playerPaused');
+        const mockListener = mock<CoveyTownListener>();
+        testingTown.addTownListener(mockListener);
+        const newPlayer = new Player('test player');
+        testingTown["_listenersInTVAreaMap"].set(newPlayer, mockListener);
+        // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
+        const clientPausedHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientPaused');
+        if (clientPausedHandler && clientPausedHandler[1]) {
+          clientPausedHandler[1]();
+          expect(mockListener.onPlayerPaused).not.toBeCalled();
+        }
+      });
+      it('should forward clientPlayed events from the socket to subscribed listeners', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        const mockListener = mock<CoveyTownListener>();
+        testingTown.addTownListener(mockListener);
+        const newPlayer = new Player('test player');
+        testingTown["_listenersInTVAreaMap"].set(newPlayer, mockListener);
+        // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
+        const clientPlayedHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientPlayed');
+        if (clientPlayedHandler && clientPlayedHandler[1]) {
+          clientPlayedHandler[1]();
+          expect(mockListener.onVideoSyncing).toBeCalledWith(testingTown["_defaultVideoInfo"]);
+        } else {
+          fail('No clientPlayed handler registered');
+        }
+      });
+      it('should forward clientEnteredTVArea events from the socket to subscribed listeners to emit socket messages', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        const mockListener = mock<CoveyTownListener>();
+        testingTown.addTownListener(mockListener);
+        // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
+        const clientEnteredTVAreaHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientEnteredTVArea');
+        if (clientEnteredTVAreaHandler && clientEnteredTVAreaHandler[1]) {
+          clientEnteredTVAreaHandler[1]();
+          expect(mockSocket.emit).toHaveBeenCalledWith('videoSynchronization', testingTown["_defaultVideoInfo"]);
+          expect(mockSocket.emit).toHaveBeenCalledWith('displayVotingWidget');
+          expect(mockSocket.emit).toHaveBeenCalledWith('nextVideoOptions', testingTown["_videoList"]);
+        } else {
+          fail('No clientEnteredTVArea handler registered');
+        }
+      });
+      it('should forward clientSynced events from the socket to subscribed listener in TV Area', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        const mockListener = mock<CoveyTownListener>();
+        testingTown.addTownListener(mockListener);
+        const newPlayer = new Player('test player');
+        testingTown["_listenersInTVAreaMap"].set(newPlayer, mockListener);
+        // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
+        const clientSyncedHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientSynced');
+        if (clientSyncedHandler && clientSyncedHandler[1]) {
+          clientSyncedHandler[1]();
+          expect(mockListener.onVideoSyncing).toBeCalledWith({
+            url: testingTown["_defaultVideoInfo"].url, 
+            timestamp: 0,
+            isPlaying: false,
+          });
+        } else {
+          fail('No clientSynced handler registered');
+        }
+      });
+      it('should forward clientLeftTVArea events from the socket to subscribed listeners', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+
+        townSubscriptionHandler(mockSocket);
+        const { token, coveyTownID } = mockSocket.handshake.auth as { token: string; coveyTownID: string };
+        const townController = CoveyTownsStore.getInstance()
+          .getControllerForTown(coveyTownID);
+        const s = townController?.getSessionByToken(token);
+
+        const mockListener = mock<CoveyTownListener>();
+        if (s && s.player && townController) {
+          townController["_listenersInTVAreaMap"].set(s.player, mockListener);
+        }
+        const clientLeftTVAreaHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientLeftTVArea');
+        if (clientLeftTVAreaHandler && clientLeftTVAreaHandler[1]) {
+          clientLeftTVAreaHandler[1]();
+          expect(mockListener.onDisablePlayPause).toBeCalled();
+        } else {
+          fail('No clientLeftTVArea handler registered');
+        }
       });
     });
   });
