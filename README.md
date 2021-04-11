@@ -4,7 +4,7 @@ Covey.Town provides a virtual meeting space where different groups of people can
 Covey.Town was built for Northeastern's [Spring 2021 software engineering course](https://neu-se.github.io/CS4530-CS5500-Spring-2021/), and is designed to be reused across semesters.
 You can view our reference deployment of the app at [app.covey.town](https://app.covey.town/).
 
-![Covey.Town Architecture](docs/covey-town-project-architecture.png)
+![Covey.Town Architecture](docs/covey-town-project-architecture.PNG)
 
 The figure above depicts the high-level architecture of Covey.Town.
 The frontend client (in the `frontend` directory of this repository) uses the [PhaserJS Game Library](https://phaser.io) to create a 2D game interface, using tilemaps and sprites.
