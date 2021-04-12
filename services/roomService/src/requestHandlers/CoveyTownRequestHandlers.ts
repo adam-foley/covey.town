@@ -207,6 +207,7 @@ function townSocketAdapter(socket: Socket): CoveyTownListener {
     onEnableVoting() {
       socket.emit('enableVotingButton');
     },
+    
     // Andrew - disables play/pause buttons for video player
     onDisablePlayPause() {
       socket.emit('disablePlayPauseButtons');

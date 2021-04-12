@@ -30,10 +30,6 @@ export default class Timer {
     return elapsedTime > 0 ? elapsedTime : 0;
   }
 
-  getRemainingSeconds(): number {
-    return this.getRemainingMiliseconds() / 1000;
-  }
-
   getElapsedSeconds(): number {
     return this.getElapsedMiliseconds() / 1000;
   }

@@ -14,7 +14,7 @@ dotenv.config(); // ANDREW - TODO ADDED FOR GOOGLE API KEY
 
 const friendlyNanoID = customAlphabet('1234567890ABCDEF', 8);
 
-function formatDuration(YTDuration: string): string {
+function formatDuration(YTDuration: string): string { 
   const timeArray= YTDuration.match(/(\d+)(?=[MHS])/ig)||[]; 
 
   const formattedTime= timeArray.map((time) => {
@@ -469,8 +469,10 @@ export default class CoveyTownController {
     if (videoid != null) {
       const videoID = videoid[1];
       const KEY = process.env.API_KEY;
+      console.log('get')
       await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${KEY}`).then((response) => {
         try {
+          console.log('then')
           const {title} = response.data.items[0].snippet;
           const {channelTitle} = response.data.items[0].snippet;
           const {duration} = response.data.items[0].contentDetails;
