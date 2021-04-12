@@ -191,38 +191,43 @@ function townSocketAdapter(socket: Socket): CoveyTownListener {
       socket.emit('townClosing');
       socket.disconnect(true);
     },
-    // Andrew - emits message to client to pause video
+    /** Emits message to client to pause video * */
     onPlayerPaused() {
       socket.emit('playerPaused');
     },
-    // Andrew - emits message to client to sync up youtube player with given video info
+    /** Emits message to client to sync up youtube player with given video info * */
     onVideoSyncing(videoInfo: YoutubeVideoInfo) {
       socket.emit('videoSynchronization', videoInfo);
     },
-    // Andrew - enables voting button for next round for video player
+    /** Enables voting button for next round for video player * */
     onEnableVoting() {
       socket.emit('enableVotingButton');
     },
-    
-    // Andrew - disables play/pause buttons for video player
+    /** Disables play/pause buttons for video player * */
     onDisablePlayPause() {
       socket.emit('disablePlayPauseButtons');
     },
+    /** Updates voting widget to have new video options * */
     onUpdatingNextVideoOptions(videoList: YTVideo[]) {
       socket.emit('nextVideoOptions', videoList);
     },
+    /** Resets video options in voting widget to be blank to prepare for next streaming session * */
     onResetVideoOptions() {
       socket.emit('resetVideoOptions');
     },
+    /** Display voting widget on screen * */
     onDisplayVotingWidget() {
       socket.emit('displayVotingWidget');
     },
+    /** Notify client that a new video has been added to their widget * */
     onVideoAdded() {
       socket.emit('addedVideo');
     },
+    /** Notify client that their video URL submisstion could not be added * */
     onUnableToAddVideo() {
       socket.emit('unableToAddVideo');
     },
+    /** Notify client that their video URL submission was not valid * */
     onUnableToUseURL() {
       socket.emit('unableToUseURL');
     },
@@ -270,19 +275,19 @@ export function townSubscriptionHandler(socket: Socket): void {
     townController.updatePlayerLocation(s.player, movementData);
   });
 
-  // Andrew - Register an event listener for the client socket: if client paused video then
+  // Register an event listener for the client socket: if client paused video then
   // have controller pause everyone's video
   socket.on('clientPaused', () => {
     townController.pauseVideos();
   });
 
-  // Andrew - Register an event listener for the client socket: if client played video then
+  // Register an event listener for the client socket: if client played video then
   // have controller play everyone's video
   socket.on('clientPlayed', () => {
     townController.playVideos();
   });
 
-  // Andrew - Register an event listener for the client socket: if client enters TV area then
+  // Register an event listener for the client socket: if client enters TV area then
   // have controller add player/listener to map of others around tv and also send synced video 
   // info to this client
   socket.on('clientEnteredTVArea', () => {
@@ -290,24 +295,25 @@ export function townSubscriptionHandler(socket: Socket): void {
   });
 
   
-  // Adam - Playing with the idea of syncing
+  // Register a event listener for the client socket: if client attempts to sync video then
+  // have controller sync all client videos
   socket.on('clientSynced', () => {
     townController.syncVideos();
   });
 
-  // Andrew - Register an event listener for the client socket: remove player from appropriate maps
+  // Register an event listener for the client socket: remove player from appropriate maps
   // in controller when player leaves TV area
   socket.on('clientLeftTVArea', () => {
     townController.removeFromTVArea(s.player);
   });
 
-  // Andrew - Register an event listener for the client socket: if a client casts a vote for a 
+  // Register an event listener for the client socket: if a client casts a vote for a 
   // video URL then have controller add a vote for that URL
   socket.on('clientVoted', (videoURL: string) => {
     townController.voteForVideo(videoURL);
   });
 
-  // Andrew - Register an event listener for the client socket: if a client submits a new URL, then controller
+  // Register an event listener for the client socket: if a client submits a new URL, then controller
   // should check if it is a valid URL before having all clients add it to their list of videos they can vote for
   socket.on('clientProposedNewURL', (videoURL: string) => {
     townController.checkNewURLValidity(videoURL, listener);
