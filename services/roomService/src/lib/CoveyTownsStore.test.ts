@@ -29,39 +29,21 @@ function mockCoveyListener(): CoveyTownListener {
     onPlayerJoined(newPlayer: Player) {
       mockCoveyListenerOtherFns(newPlayer);
     },
-    onPlayerPaused() {
-      // mockCoveyListenerPlayerPaused();
-    },
-    onPlayerPlayed() {
-      // mockCoveyListenerPlayerPlayed();
-    },
+    onPlayerPaused() {},
+    onPlayerPlayed() {},
     onVideoSyncing(videoInfo: YoutubeVideoInfo) {
       mockCoveyListenerOtherFns(videoInfo);
     },
-    onEnableVoting() {
-      // mockCoveyListenerEnableVoting();
-    },
-    onDisablePlayPause() {
-      // mockCoveyListenerDisablePlayPause();
-    },
+    onEnableVoting() {},
+    onDisablePlayPause() {},
     onUpdatingNextVideoOptions(videoList: YTVideo[]) {
       mockCoveyListenerOtherFns(videoList);
     },
-    onResetVideoOptions() {
-      // mockCoveyListenerResetVideoOptions();
-    },
-    onDisplayVotingWidget() {
-      // mockCoveyListenerDisplayVotingWidget();
-    },
-    onVideoAdded() {
-      // mock included here
-    },
-    onUnableToAddVideo() {
-      // mock included here
-    },
-    onUnableToUseURL() {
-      // mock included here
-    },
+    onResetVideoOptions() {},
+    onDisplayVotingWidget() {},
+    onVideoAdded() {},
+    onUnableToAddVideo() {},
+    onUnableToUseURL() {},
   };
 }
 

@@ -469,10 +469,8 @@ export default class CoveyTownController {
     if (videoid != null) {
       const videoID = videoid[1];
       const KEY = process.env.API_KEY;
-      console.log('get')
       await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${KEY}`).then((response) => {
         try {
-          console.log('then')
           const {title} = response.data.items[0].snippet;
           const {channelTitle} = response.data.items[0].snippet;
           const {duration} = response.data.items[0].contentDetails;
