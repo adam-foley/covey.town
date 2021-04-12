@@ -195,10 +195,6 @@ function townSocketAdapter(socket: Socket): CoveyTownListener {
     onPlayerPaused() {
       socket.emit('playerPaused');
     },
-    // Andrew - emits message to client to play video
-    onPlayerPlayed() {
-      socket.emit('playerPlayed');
-    },
     // Andrew - emits message to client to sync up youtube player with given video info
     onVideoSyncing(videoInfo: YoutubeVideoInfo) {
       socket.emit('videoSynchronization', videoInfo);

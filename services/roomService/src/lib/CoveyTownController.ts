@@ -102,10 +102,6 @@ export default class CoveyTownController {
   // needs something
   private _listenersInTVAreaMap: Map<Player, CoveyTownListener> = new Map<Player, CoveyTownListener>();
 
-  // Andrew - map of players to their current video info. Players are recorded so that their video info is 
-  // removed from this map when they leave the tv area
-  private _currentVideoInfoMap: Map<Player, YoutubeVideoInfo> = new Map<Player, YoutubeVideoInfo>();
-
   // Andrew - default video info to send to player that is first to join tv area
   private _defaultVideoInfo: YoutubeVideoInfo; // construction moved to constructor
   
@@ -341,11 +337,6 @@ export default class CoveyTownController {
 
   // // Andrew - remove listeners and most-recent video info associated with player after they leave tv area
   removeFromTVArea(playerToRemove: Player): void {
-    // Adam - Logic to only remove if player is in the current video info map
-    if (this._currentVideoInfoMap.has(playerToRemove)) {
-      this._currentVideoInfoMap.delete(playerToRemove);
-    }
-    
     // Adam - Logic to only remove if player is in the current listener in tv area map
     if (this._listenersInTVAreaMap.has(playerToRemove)) {
       this._listenersInTVAreaMap.get(playerToRemove)?.onDisablePlayPause(); // Andrew - so that play/pause buttons don't display after client rejoins tv area

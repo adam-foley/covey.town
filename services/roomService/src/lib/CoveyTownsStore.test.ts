@@ -30,7 +30,6 @@ function mockCoveyListener(): CoveyTownListener {
       mockCoveyListenerOtherFns(newPlayer);
     },
     onPlayerPaused() {},
-    onPlayerPlayed() {},
     onVideoSyncing(videoInfo: YoutubeVideoInfo) {
       mockCoveyListenerOtherFns(videoInfo);
     },
