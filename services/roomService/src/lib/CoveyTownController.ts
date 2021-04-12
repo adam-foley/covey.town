@@ -76,6 +76,10 @@ export default class CoveyTownController {
     return this._coveyTownID;
   }
 
+  get listeners(): CoveyTownListener[] {
+    return this._listeners;
+  }
+
   /** The list of players currently in the town * */
   private _players: Player[] = [];
 
@@ -236,21 +240,21 @@ export default class CoveyTownController {
    * current video length and much time is left in the video
    * 
    */
-  getMilisecondsForTimer(): number {
+  private getMilisecondsForTimer(): number {
     return  (this._masterVideoLength - this._masterTimeElapsed) * 1000;
   }
 
   /**
    * Creates a time object that is used to know when to go to chooseNextVideo
    */
-  createTimer(): Timer {
+  private createTimer(): Timer {
     return new Timer( () => { this.chooseNextVideo(); }, this.getMilisecondsForTimer() );
   }
 
   /**
    * Destroys the current timer and sets the timer to null
    */
-  destroyTimer(): void {
+  private destroyTimer(): void {
     this._currentTimer?.clearTimer();
     this._currentTimer = null;
   }
@@ -258,7 +262,7 @@ export default class CoveyTownController {
   /**
    * Updated master time elpased with time on the timer
    */
-  addTimerToMasterTimeElapsed(): void {
+  private addTimerToMasterTimeElapsed(): void {
     if (this._currentTimer) {
       this._masterTimeElapsed += this._currentTimer.getElapsedSeconds();
     }
