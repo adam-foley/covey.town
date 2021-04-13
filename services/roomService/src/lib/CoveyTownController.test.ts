@@ -1161,18 +1161,18 @@ describe('CoveyTownController', () => {
         testingTown.chooseNextVideo();
         expect(mockSocket.emit).not.toBeCalledWith('enableVotingButton');
       });
-      it('should add a town listener, which should emit "disablePlayPauseButtons" to the socket when a player is removed from TV area when listener in listenersInTVAreaMap', async () => {
+      it('should add a town listener, which should emit "onDisableControlButtons" to the socket when a player is removed from TV area when listener in listenersInTVAreaMap', async () => {
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
         townSubscriptionHandler(mockSocket);
         testingTown.addToTVArea(player, testingTown.listeners[0]);
         testingTown.removeFromTVArea(player);
-        expect(mockSocket.emit).toBeCalledWith('disablePlayPauseButtons');
+        expect(mockSocket.emit).toBeCalledWith('disableControlButtons');
       });
-      it('should add a town listener, which should not emit "disablePlayPauseButtons" to the socket when a player is removed from TV area when listener not in listenersInTVAreaMap', async () => {
+      it('should add a town listener, which should not emit "onDisableControlButtons" to the socket when a player is removed from TV area when listener not in listenersInTVAreaMap', async () => {
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
         townSubscriptionHandler(mockSocket);
         testingTown.removeFromTVArea(player);
-        expect(mockSocket.emit).not.toBeCalledWith('disablePlayPauseButtons');
+        expect(mockSocket.emit).not.toBeCalledWith('disableControlButtons');
       });
       it('should add a town listener, which should emit "nextVideoOptions" to the socket when a player is added to TV area when listener in listenersInTVAreaMap', async () => {
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
