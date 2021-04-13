@@ -7,7 +7,9 @@ export type UserLocation = {
 };
 export type CoveyTownList = { friendlyName: string; coveyTownID: string; currentOccupancy: number; maximumOccupancy: number }[];
 
-// Andrew - contains url, timestamp, and isPlaying which is passed around so that clients can sync up
+/** 
+ * Represents the state of a video, with url, timestamp, and whether video is playing
+ */
 export type YoutubeVideoInfo = {
   url: string;
   timestamp: number;

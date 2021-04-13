@@ -1,3 +1,6 @@
+/** 
+ * Represents a youtube video and its relevant information
+ */
 export type YTVideo = {
   url: string;
   title: string;
@@ -5,8 +8,12 @@ export type YTVideo = {
   duration: string;
 };
 
+/** The list of default videos */
 export const videoList: YTVideo[] = [];
 
+/** 
+ * Returns a copy of the list of default videos
+ */
 export function getDefaultVideos(): YTVideo[] {
   return [...videoList];
 }
