@@ -10,10 +10,13 @@ import IVideoClient from './IVideoClient';
 import Timer from '../timer';
 import { YTVideo, getDefaultVideos } from '../types/YTVideo';
 
-dotenv.config(); // ANDREW - TODO ADDED FOR GOOGLE API KEY
+dotenv.config();
 
 const friendlyNanoID = customAlphabet('1234567890ABCDEF', 8);
 
+/**
+ * Formats the video duration from ISO 8601 format to hh:mm:ss format
+ */
 function formatDuration(YTDuration: string): string { 
   const timeArray= YTDuration.match(/(\d+)(?=[MHS])/ig)||[]; 
 
@@ -31,6 +34,19 @@ function formatDuration(YTDuration: string): string {
   }).join(':');
 
   return formattedTime;
+}
+
+/**
+ * Converts video duration from array of hours, minutes, seconds to total seconds
+ */
+function parseDurationToSeconds(videoHoursMinutesSeconds: string[]) : number{
+  let vidDurationSeconds;
+  if (videoHoursMinutesSeconds.length === 3) {
+    vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
+  } else {
+    vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
+  }
+  return vidDurationSeconds;
 }
 
 /**
@@ -150,12 +166,7 @@ export default class CoveyTownController {
       isPlaying: this._defaultVideoInfo.isPlaying,
     };
     const videoHoursMinutesSeconds = randomFirstVideo.duration.split(':');
-    let vidDurationSeconds;
-    if (videoHoursMinutesSeconds.length === 3) {
-      vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
-    } else {
-      vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
-    }
+    const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds)
     this._masterVideoLength = vidDurationSeconds;
   }
 
@@ -238,7 +249,6 @@ export default class CoveyTownController {
   /**
    * Used to get the amount of time we need to set the timer for based on the 
    * current video length and much time is left in the video
-   * 
    */
   private getMilisecondsForTimer(): number {
     return  (this._masterVideoLength - this._masterTimeElapsed) * 1000;
@@ -260,7 +270,7 @@ export default class CoveyTownController {
   }
 
   /**
-   * Updated master time elpased with time on the timer
+   * Updates master time elpased with time elapsed on the current timer
    */
   private addTimerToMasterTimeElapsed(): void {
     if (this._currentTimer) {
@@ -268,24 +278,28 @@ export default class CoveyTownController {
     }
   }
 
-  // Andrew - have every client pause their video
+  /**
+   * Pauses the video for all listeners within the TV Area
+   */
   pauseVideos(): void {
-
+    // We only want to pause if there is a timer, meaning that the video is currently playing
     if (this._currentTimer) {
       this.addTimerToMasterTimeElapsed();
-      // Stop the timer
       this.destroyTimer();
       this._listenersInTVAreaMap.forEach((listener) => listener.onPlayerPaused());
     }
   }
 
+  /**
+   * Syncs the video for all listeners within the TV Area
+   */
   syncVideos(): void {
-
-    // If video is playing, update master time
+    // When the video is playing and sync is requested, we can pause the videos and then play to sync
     if (this._currentTimer){
       this.pauseVideos();
       this.playVideos();
     } else {
+      // We know the video is not playing, so sync to the current master time elapsed
       this._listenersInTVAreaMap.forEach((listener) => listener.onVideoSyncing({
         url: this._currentVideoInfo.url,
         timestamp: this._masterTimeElapsed,
@@ -294,13 +308,12 @@ export default class CoveyTownController {
     }
   }
 
-  // Andrew - have every client play their video
+  /**
+   * SPlays the video for all listeners within the TV Area
+   */
   playVideos(): void {
-
-    // Spam Logic - If someone already pressed play, there current timer would not be null and we will not enter this condition
+    // We only want to play if there is not a timer, meaning that the video is not currently playing
     if (!this._currentTimer) {
-
-      // Each time we play, sync all players to the master time elapsed
       this._listenersInTVAreaMap.forEach((listener) => listener.onVideoSyncing({
         url: this._currentVideoInfo.url,
         timestamp: this._masterTimeElapsed,
@@ -312,72 +325,80 @@ export default class CoveyTownController {
     }
   }
 
-  // Andrew - if player is first to enter, then emit message to client to play default video. 
-  // Otherwise, emit message to client to load curent video at timestamp of the other players. 
+  /**  
+   * Adds player to TV area which adds them to listeners in the TV Area and syncs the player's video to the current state in the Town.
+   * This includes the correct video url, time elapsed, and if it is playing currently.
+   */
   addToTVArea(playerToAdd: Player, listenerToAdd: CoveyTownListener): void {
     this._listenersInTVAreaMap.set(playerToAdd, listenerToAdd);
     let upToDateVideoInfo : YoutubeVideoInfo;
 
-    /* Timer means video is playing -> gets current video info. Update masterTimeElapsed to account for time on timer
-       and it is playing, so set is playing to true */
+    // If there is a timer (the video is playing), client should be sent updated video info with 
+    // the current url, timestamp of master time elapsed plus the time elapsed on the timer, and whether video is playing
     if (this._currentTimer) {
-      upToDateVideoInfo = { url: this._currentVideoInfo.url, timestamp:  this._masterTimeElapsed + this._currentTimer.getElapsedSeconds(), isPlaying : true};
+      upToDateVideoInfo = { 
+        url: this._currentVideoInfo.url, 
+        timestamp:  this._masterTimeElapsed + this._currentTimer.getElapsedSeconds(), 
+        isPlaying : true
+      };
     } else if (this._listenersInTVAreaMap.size === 1) {
-      // No Timer and first person -> gets default video info. Otherwise -> gets current video, master time, and not playing
+      // If they are the first player, provide the default video info and start a timer as default is to play when the first player enters
       upToDateVideoInfo = this._defaultVideoInfo;
       this._currentTimer = this.createTimer();
     } else {
+      // There is not a timer, the video is not playing, provide the current url, the master time elapsed, and to not play the video
       upToDateVideoInfo = { url: this._currentVideoInfo.url, timestamp:  this._masterTimeElapsed, isPlaying : false};
     }
-
-    // Once we have the updated video info
+    // Sync the player's video to current state and provide them with voting widget and videos to vote on
     listenerToAdd.onVideoSyncing(upToDateVideoInfo);
-
     listenerToAdd.onDisplayVotingWidget();
-
     listenerToAdd.onUpdatingNextVideoOptions(this._videoList);
   }
 
-
-  // // Andrew - remove listeners and most-recent video info associated with player after they leave tv area
+  /** 
+   * Removes player and most-recent video info associated with player after they leave tv area.
+   * 
+   * @param playerToRemove The player to remove from the TV Area.
+   * */
   removeFromTVArea(playerToRemove: Player): void {
-    // Adam - Logic to only remove if player is in the current listener in tv area map
     if (this._listenersInTVAreaMap.has(playerToRemove)) {
-      this._listenersInTVAreaMap.get(playerToRemove)?.onDisableControlButtons(); // Andrew - so that play/pause buttons don't display after client rejoins tv area
-      this._listenersInTVAreaMap.get(playerToRemove)?.onEnableVoting(); // Andrew - so that voting button works after client rejoins tv area
+      // Reset to default state and deltes the player from the TV Area
+      this._listenersInTVAreaMap.get(playerToRemove)?.onDisableControlButtons();
+      this._listenersInTVAreaMap.get(playerToRemove)?.onEnableVoting();
       this._listenersInTVAreaMap.get(playerToRemove)?.onResetVideoOptions();
       this._listenersInTVAreaMap.delete(playerToRemove);
 
+      // After removing the player from the TV Area, if it is empty, reset to default state
       if (this._listenersInTVAreaMap.size === 0){
         this.destroyTimer();
         this._masterTimeElapsed = 0;
-        this._videoList = [...this._defaultVideoList]; // Andrew - this is so that the default list of videos to vote on pops up next time someone enters
+        this._videoList = [...this._defaultVideoList];
+
+        // Reset default and current video info to play a random video from the default list
         const randomFirstVideo = this._defaultVideoList[Math.floor(Math.random() * this._defaultVideoList.length)];
         this._defaultVideoInfo = { 
           url: randomFirstVideo.url,
           timestamp: 0,
           isPlaying: true,
         };
-        this._currentVideoInfo = { // ANDREW - TODO QUESTION FOR ADAM, CAN I SET THIS VARIABLE HERE??????
+        this._currentVideoInfo = {
           url: this._defaultVideoInfo.url,
           timestamp: this._defaultVideoInfo.timestamp,
           isPlaying: this._defaultVideoInfo.isPlaying,
         };
 
+        // Parsing the duration of the randomFirstVideoInfo to be in seconds.
         const videoHoursMinutesSeconds = randomFirstVideo.duration.split(':');
-        let vidDurationSeconds;
-        if (videoHoursMinutesSeconds.length === 3) {
-          vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
-        } else {
-          vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
-        }
+        const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds);
+        // Set the master video length to the length of randomFirstVideoInfo declared above
         this._masterVideoLength = vidDurationSeconds;
       }
     }
   }
 
-  // Andrew - This is how the server chooses the video URL with the most votes. If ther eare no votes then a 
-  // default video will be played.
+  /** 
+   * Chooses the next video to be played to each player within the TV Area
+   */
   chooseNextVideo(): void {
 
     // Destroy the current timer
@@ -399,48 +420,38 @@ export default class CoveyTownController {
 
     const nextVideoInfo = this._videoList.find((video) => video.url === maxVotedURL);
     const videoHoursMinutesSeconds = nextVideoInfo?.duration.split(':');
-    let vidDurationSeconds;
     if (videoHoursMinutesSeconds) {
-      if (videoHoursMinutesSeconds.length === 3) {
-        vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
-      } else {
-        vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
-      }
+      const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds);
       this._masterVideoLength = vidDurationSeconds;
     } else {
+      // provide default video duration for next video if proper video format is not provided
       this._masterVideoLength = 100;
     }
     
-    // Create a timer for this max voted video
-    // TODO: Before this, we need to update _masterVideoLength
-    // this._currentTimer = this.createTimer();
-
     this._currentVideoInfo.url = maxVotedURL.valueOf();
-
-    // We only want to call onVideoSyncing to listeners in the TV Area Map
     this._listenersInTVAreaMap.forEach((listener) => listener.onVideoSyncing({
       url: this._currentVideoInfo.url,
       timestamp: 0,
       isPlaying: true,
     }));
 
-    this._currentTimer = this.createTimer(); // ANDREW - CHANGE
-
-    /* Need to update current video url to the max voted, that way when someone joins
-       after video changes we need them to load the current video */
+    // Start timer to countdown until end of new video
+    this._currentTimer = this.createTimer();
     
-    // Andrew - this enables the voting button so that a client can vote this upcoming round
-    // this._listenersInTVAreaMap.forEach((listener) => listener.onEnableVoting()); // TODO maybe have only listeners in the tv area
+    // Enable the voting button so that a client can vote this upcoming round and provide current list of
+    // videos to vote on for next round
     this._listenersInTVAreaMap.forEach((listener) => {
       listener.onEnableVoting();
       listener.onUpdatingNextVideoOptions(this._videoList);
     }); 
 
-
-    // clear votes now for next round
+    // Clear video URL votes for next round 
     this._videoURLVotes = new Map<string, number>();
   }
 
+  /** 
+   * Cast a vote for the given URL to be played next round
+   */
   voteForVideo(videoURL: string): void {
     let seenVid = false;
     this._videoURLVotes.forEach((numVotes, existingURL) => {
@@ -454,6 +465,10 @@ export default class CoveyTownController {
     }
   }
 
+  /** 
+   * Checks inputted URL to see if it is a valid Youtube API using Youtube Data API. Notifies client on whether
+   * video URL was legitimate or not and if it has been added to the list of videos to vote on.
+   */
   async addVideoToVideoList(inputURL: string, listenerSubmittedBy: CoveyTownListener): Promise<void> {
     const instance = axios.create({
       baseURL: 'https://youtube.googleapis.com/youtube/v3',
@@ -472,6 +487,8 @@ export default class CoveyTownController {
           const formattedDuration = formatDuration(duration);
           const newVideo: YTVideo = {url: inputURL, title, channel: channelTitle, duration:formattedDuration};
           this._videoList.push(newVideo);
+
+          // Notify users that a new video has been added to vote on
           this._listenersInTVAreaMap.forEach((listener) => {
             listener.onUpdatingNextVideoOptions(this._videoList);
             listener.onVideoAdded();
@@ -480,18 +497,24 @@ export default class CoveyTownController {
           listenerSubmittedBy.onUnableToAddVideo();
         }
       }).catch(() => {
+        // if URL is not a valid youtube video then notify user of this fact
         listenerSubmittedBy.onUnableToAddVideo();
       });
     } else {
+      // If URL is not in the format of a youtube URL then notify user of this fact
       listenerSubmittedBy.onUnableToUseURL();
     } 
   }
 
+  /** 
+   * Checks inputted video URL to see if it is already in the list of videos to vote on. If not, check
+   * that the URL is valid and notify user of this fact. Add video to list of videos to vote on if valid.
+   */
   checkNewURLValidity(videoURL: string, listenerSubmittedBy: CoveyTownListener): void {
     let unseenURLBefore = true;
     this._videoList.forEach((video) => {
       if (videoURL === video.url) {
-        unseenURLBefore = false; // ANDREW - TODO MAYBE THIS IS ONE OF THE SPOTS THAT WE SEND A SOCKET MESSAGE TO THE CLIENT TO DISPLAY TOAST ABOUT URL ALREADY THERE
+        unseenURLBefore = false;
       }
     });
     if (unseenURLBefore) {
