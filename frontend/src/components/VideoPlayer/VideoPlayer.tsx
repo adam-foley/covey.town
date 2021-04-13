@@ -63,6 +63,7 @@ export default function VideoPlayer(): JSX.Element {
     });
   },[socket]);
 
+  // When the user enters the TV area, a toast should appear indicating how the user can interact with the youtube player stream
   useEffect(() => {
     if (showYTPlayer) {
       toast({
@@ -75,6 +76,8 @@ export default function VideoPlayer(): JSX.Element {
     }
   }, [toast, showYTPlayer]);
   
+  // showYTPlayer boolean controls if youtube player is shown. An invisible div is placed above youtube player to prevent user from accidentally
+  // interacting with the youtube player. This requires user to interact with stream using the Play/Pause button, Sync button, and Mute/Unmut button.
   return (<div>
     { showYTPlayer ? <div> <div style={{position: 'absolute', zIndex: 300000, height: '200px', width: '400px'}}> </div> <div> <YouTube
       ref={playerRef}
@@ -84,6 +87,7 @@ export default function VideoPlayer(): JSX.Element {
         <HStack spacing="82px">
           { !areControlButtonsDisabled ? <div>
           <Button colorScheme="blue" disabled={areControlButtonsDisabled} type="submit" onClick={() => {
+            // conditional determines if button functions as pauser or player
             if (isPlaying) {
               socket?.emit('clientPaused');
             } else {
@@ -92,6 +96,7 @@ export default function VideoPlayer(): JSX.Element {
             }}>Play/Pause</Button>
           <Button colorScheme="blue" disabled={areControlButtonsDisabled} type="submit" onClick={() => socket?.emit('clientSynced')}>Sync</Button>
           <Button colorScheme="blue" disabled={areControlButtonsDisabled} type="submit" onClick={() => {
+            // conditional determines if button functions as unmuter or muter
             if (isMuted) {
               playerRef.current?.internalPlayer.unMute();
               setIsMuted(false);
@@ -103,6 +108,7 @@ export default function VideoPlayer(): JSX.Element {
           </div> : null }
           { areControlButtonsDisabled ? <div>
           <Button colorScheme="blue" disabled={!areControlButtonsDisabled} type="submit" onClick={() => {
+            // "Join Stream" button tells server that user entered stream and should be synced up
             socket?.emit('clientEnteredTVArea');
             setAreControlButtonsDisabled(false);
           }}>Join Stream</Button>

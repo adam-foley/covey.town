@@ -463,7 +463,7 @@ export default class CoveyTownController {
     const videoid = inputURL.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
     if (videoid != null) {
       const videoID = videoid[1];
-      const KEY = process.env.API_KEY;
+      const KEY = process.env.YOUTUBE_API_KEY;
       await instance.get(`/videos?part=snippet&part=contentDetails&id=${videoID}&key=${KEY}`).then((response) => {
         try {
           const {title} = response.data.items[0].snippet;

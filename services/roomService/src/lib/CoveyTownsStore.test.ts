@@ -7,13 +7,6 @@ import { YTVideo } from '../types/YTVideo';
 
 const mockCoveyListenerTownDestroyed = jest.fn();
 const mockCoveyListenerOtherFns = jest.fn();
-// const mockCoveyListenerPlayerPaused = jest.fn();
-// const mockCoveyListenerPlayerPlayed = jest.fn();
-// const mockCoveyListenerEnableVoting = jest.fn();
-// const mockCoveyListenerDisablePlayPause = jest.fn();
-// const mockCoveyListenerResetVideoOptions = jest.fn();
-// const mockCoveyListenerDisplayVotingWidget = jest.fn();
-
 
 function mockCoveyListener(): CoveyTownListener {
   return {
