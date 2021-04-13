@@ -34,7 +34,7 @@ function mockCoveyListener(): CoveyTownListener {
       mockCoveyListenerOtherFns(videoInfo);
     },
     onEnableVoting() {},
-    onDisablePlayPause() {},
+    onDisableControlButtons() {},
     onUpdatingNextVideoOptions(videoList: YTVideo[]) {
       mockCoveyListenerOtherFns(videoList);
     },

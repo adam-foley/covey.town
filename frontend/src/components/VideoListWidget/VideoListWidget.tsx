@@ -12,19 +12,32 @@ type YTVideo = {
   duration: string;
 }
 
+/**
+ * A widget component for voting for the next video to play in the stream. Component has a table of possible videos to vote on
+ * as well as an input to submit a new youtube URL to add to the widgets of every person in the TV area.
+ */
 export default function VideoListWidget(): JSX.Element {
-  // Andrew - use hook so Widget only renders when near TV and also so that we have access to socket to emit messages
+  // Access showYTPlayer boolean so widget only renders when near TV
   const {
     showYTPlayer, socket
   } = useCoveyAppState();
 
   const toast = useToast();
   const [newVideoURL, setNewVideoURL] = useState('');
+
+  // All of the youtube videos that will displayed on the widget to vote on
   const [ytVideos, setYTVideos] = useState<YTVideo[]>([]);
-  const [radioButtonState, setRadioButtonState] = useState(''); // Andrew - changed to ytVideos instead of global videoList
+
+  // Holds URL that may be voted on be user
+  const [radioButtonState, setRadioButtonState] = useState('');
+  
+  // Controls whether voting button is disabled so that user can vote once per video
   const [votingButtonDisabled, setVotingButtonDisabled] = useState<boolean>(false);
+
+  // Boolean controls whether widget is displayed or not
   const [showWidget, setShowWidget] = useState<boolean>(false);
 
+  /** Creates a table row for each youtube video that can be voted on */
   const listVideos = () => ytVideos.map(video => (
       <Tr key={video.url}>
         <Td role='cell'>{video.title}</Td>
@@ -40,21 +53,26 @@ export default function VideoListWidget(): JSX.Element {
       </Tr>
   ));
 
-  // Andrew - set up sockets to receive messages from server
+  /** Set up sockets to receive and handle messages from server */
   useEffect(() => {
+    // When server gives client the list of videos that can be voted on, widget should update its video options
     socket?.on('nextVideoOptions', (nextVideoOptions: YTVideo[]) => {
       setYTVideos(nextVideoOptions);
     });
+    // After a new video starts, server tells client to enable voting
     socket?.on('enableVotingButton', () => {
       setVotingButtonDisabled(false);
     });
+    // After player leaves TV area, youtube video options should be reset and widget should not show up upon re-entering
     socket?.on('resetVideoOptions', () => {
       setYTVideos([]);
       setShowWidget(false);
     });
+    // After stream is successfully joined, the client should show the voting widget
     socket?.on('displayVotingWidget', () => {
       setShowWidget(true);
     });
+    // When any client in TV area adds a new URL to vote on, client should be notified with toast
     socket?.on('addedVideo', () => {
       toast({
         title: `Submitted Youtube video was added to the list`,
@@ -63,6 +81,7 @@ export default function VideoListWidget(): JSX.Element {
         duration: 5000,
       });
     });
+    // If server determines that submitted URL cannot be added to video list to vote on, then client should be notified with toast
     socket?.on('unableToAddVideo', () => {
       toast({
         title: `Looks like something went wrong:`,
@@ -72,6 +91,7 @@ export default function VideoListWidget(): JSX.Element {
         duration: 5000,
       })
     });
+    // If server determines that submitted URL does not match valid URL format then client should be notified with toast
     socket?.on('unableToUseURL', () => {
       toast({
         title: `Looks like something went wrong:`,
@@ -83,8 +103,7 @@ export default function VideoListWidget(): JSX.Element {
     })
   },[socket, toast]);
 
-  // Joe - for new url submission. Check if URL is valid. If not say not added, if yes add it. Need to get youtube title, channel, duration using youtube api
-  // Andrew - Only display if showYTPlayer is true (when player is by TV)
+  // Component should only display if client is in TV area and has clicked "Join Stream"
   return (
     <> { showYTPlayer && showWidget ? 
       <form>
@@ -92,6 +111,7 @@ export default function VideoListWidget(): JSX.Element {
             <HStack spacing="500px">
             <Heading p="5" size="lg">Select A Video To Watch Next</Heading>
             <Button colorScheme="blue" disabled={votingButtonDisabled} onClick={() => {
+                // Send single vote for the next video to play to server and then disable voting button
                 socket?.emit('clientVoted', radioButtonState);
                 setVotingButtonDisabled(true);
             }}>Submit Vote</Button>
@@ -115,8 +135,7 @@ export default function VideoListWidget(): JSX.Element {
           </FormControl>
           <Button size="md" width="150px" colorScheme="blue" 
             onClick={() => {
-                // send the URL to the server to check if it is valid
-                // Andrew - the re-rendering is handled when the socket receives the URL from the server if it's valid
+                // Send the URL to the server to check if it is a valid youtube video
                 socket?.emit('clientProposedNewURL', newVideoURL);
             }}
           >

@@ -759,7 +759,7 @@ describe('CoveyTownController', () => {
       expect(mockListeners[0].onUpdatingNextVideoOptions).toBeCalledWith(defaultVideoList);
       expect(mockListeners[1].onUpdatingNextVideoOptions).toBeCalledWith(defaultVideoList);
     });
-    it('should notify added listeners in tv area to call onDisablePlayPause when removeFromTVArea is called', async () => {
+    it('should notify added listeners in tv area to call onDisableControlButtons when removeFromTVArea is called', async () => {
       const player = new Player('test player');
       await testingTown.addPlayer(player);
       const secondPlayer = new Player('second player');
@@ -771,9 +771,9 @@ describe('CoveyTownController', () => {
       testingTown.addToTVArea(player, mockListeners[0]);
       testingTown.addToTVArea(secondPlayer, mockListeners[1]);
       testingTown.removeFromTVArea(player);
-      expect(mockListeners[0].onDisablePlayPause).toBeCalled();
+      expect(mockListeners[0].onDisableControlButtons).toBeCalled();
       testingTown.removeFromTVArea(secondPlayer);
-      expect(mockListeners[1].onDisablePlayPause).toBeCalled();
+      expect(mockListeners[1].onDisableControlButtons).toBeCalled();
     });
     it('should notify added listeners in tv area to call onEnableVoting when removeFromTVArea is called', async () => {
       const player = new Player('test player');
@@ -979,7 +979,7 @@ describe('CoveyTownController', () => {
       // onVideoSyncing will have been called once already from adding players and listeners to TV Area
       mockListeners.forEach(listener => expect(listener.onVideoSyncing).not.toHaveBeenCalledTimes(2));
     });
-    it('should not notify listeners not in tv area to call onDisablePlayPause when removeFromTVArea is called', async () => {
+    it('should not notify listeners not in tv area to call onDisableControlButtons when removeFromTVArea is called', async () => {
       const player = new Player('test player');
       await testingTown.addPlayer(player);
       const secondPlayer = new Player('second player');
@@ -987,9 +987,9 @@ describe('CoveyTownController', () => {
       
       mockListeners.forEach(listener => testingTown.addTownListener(listener));
       testingTown.removeFromTVArea(player);
-      expect(mockListeners[0].onDisablePlayPause).not.toBeCalled();
+      expect(mockListeners[0].onDisableControlButtons).not.toBeCalled();
       testingTown.removeFromTVArea(secondPlayer);
-      expect(mockListeners[1].onDisablePlayPause).not.toBeCalled();
+      expect(mockListeners[1].onDisableControlButtons).not.toBeCalled();
     });
     it('should not notify listeners not in tv area to call onEnableVoting when removeFromTVArea is called', async () => {
       const player = new Player('test player');
@@ -1370,7 +1370,7 @@ describe('CoveyTownController', () => {
         const clientLeftTVAreaHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientLeftTVArea');
         if (clientLeftTVAreaHandler && clientLeftTVAreaHandler[1]) {
           clientLeftTVAreaHandler[1]();
-          expect(mockListener.onDisablePlayPause).toBeCalled();
+          expect(mockListener.onDisableControlButtons).toBeCalled();
           expect(mockListener.onEnableVoting).toBeCalled();
           expect(mockListener.onResetVideoOptions).toBeCalled();
         } else {

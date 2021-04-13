@@ -343,7 +343,7 @@ export default class CoveyTownController {
   removeFromTVArea(playerToRemove: Player): void {
     // Adam - Logic to only remove if player is in the current listener in tv area map
     if (this._listenersInTVAreaMap.has(playerToRemove)) {
-      this._listenersInTVAreaMap.get(playerToRemove)?.onDisablePlayPause(); // Andrew - so that play/pause buttons don't display after client rejoins tv area
+      this._listenersInTVAreaMap.get(playerToRemove)?.onDisableControlButtons(); // Andrew - so that play/pause buttons don't display after client rejoins tv area
       this._listenersInTVAreaMap.get(playerToRemove)?.onEnableVoting(); // Andrew - so that voting button works after client rejoins tv area
       this._listenersInTVAreaMap.get(playerToRemove)?.onResetVideoOptions();
       this._listenersInTVAreaMap.delete(playerToRemove);
@@ -478,15 +478,12 @@ export default class CoveyTownController {
           });
         } catch (error) {
           listenerSubmittedBy.onUnableToAddVideo();
-          // throw Error('Unable to added video'); // maybe have return -1, instead of throw errors. Then server can send -1, thus can mean certain toast shows error message
         }
       }).catch(() => {
         listenerSubmittedBy.onUnableToAddVideo();
-        // throw Error('Unable to added video');
       });
     } else {
       listenerSubmittedBy.onUnableToUseURL();
-      // throw Error('Unable to use given video url');
     } 
   }
 

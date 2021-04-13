@@ -39,7 +39,7 @@ export default interface CoveyTownListener {
   onEnableVoting(): void;
 
   // Andrew - called when client should disable play/pause buttons before next time it joins tv sream
-  onDisablePlayPause(): void;
+  onDisableControlButtons(): void;
 
   onUpdatingNextVideoOptions(videoList: YTVideo[]): void;
 

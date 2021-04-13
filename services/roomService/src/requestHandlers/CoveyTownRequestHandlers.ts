@@ -203,9 +203,9 @@ function townSocketAdapter(socket: Socket): CoveyTownListener {
     onEnableVoting() {
       socket.emit('enableVotingButton');
     },
-    /** Disables play/pause buttons for video player * */
-    onDisablePlayPause() {
-      socket.emit('disablePlayPauseButtons');
+    /** Disables control buttons for video player * */
+    onDisableControlButtons() {
+      socket.emit('disableControlButtons');
     },
     /** Updates voting widget to have new video options * */
     onUpdatingNextVideoOptions(videoList: YTVideo[]) {

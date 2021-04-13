@@ -1,37 +1,51 @@
 import React, { useEffect, useState, useRef } from 'react';
 import YouTube from 'react-youtube';
-// import { YouTubePlayer } from 'youtube-player/dist/types'; 
 import { Button, HStack, useToast } from '@chakra-ui/react';
 import { YoutubeVideoInfo } from '../../CoveyTypes';
 import useCoveyAppState from '../../hooks/useCoveyAppState';
 
+/**
+ * A Youtube video player component. Video player allows users to watch youtube videos synchronously with
+ * other clients in the same town gathered around the TV. Video stream must be actively joined by clicking
+ * "Join Stream". After this, three buttons will appear for play/pause, sync, and mute/unmute. Play/pause
+ * cause your video and other clients' videos to play/pause. Sync causes everyone's video to go to the same
+ * timestamp. Mute/unmute causes only your own video to be muted or unmuted. 
+ */
 export default function VideoPlayer(): JSX.Element {
+  // Access showYTPlayer boolean so video player only renders when near TV
   const {
     showYTPlayer, socket
   } = useCoveyAppState();
 
+  // The following syntax with <any> is used since the react-youtube package has a known issue with using
+  // Typescript to get a pointer to the youtube player object: https://github.com/tjallingt/react-youtube/issues/211 
+  // This syntax is the best workaround.
   /* eslint-disable */
   const playerRef = useRef<any>();
   /* eslint-enable */
 
-  const [arePlayPauseDisabled, setArePlayPausedDisabled] = useState<boolean>(true);
+  // Controls whether buttons to control video player are disabled and not shown
+  const [areControlButtonsDisabled, setAreControlButtonsDisabled] = useState<boolean>(true);
+
   const toast = useToast();
+
+  // Following two stats control which functionality each respective button has, whether mute or unmute for the
+  // mute/unmute button, or play or pause for the play/pause button
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
 
   useEffect(() => {
-    // socket?.emit('clientEnteredTVArea');
-    // Andrew - listens for server saying someone paused video
+    // Listens for server saying someone paused video, which should cause client's video to pause
     socket?.on('playerPaused', () => {
         playerRef.current?.internalPlayer.pauseVideo();
         setIsPlaying(false);
     });
-    // Andrew - listens for server saying someone played video
+    // Listens for server saying someone played video, which should cause client's video to pause
     socket?.on('playerPlayed', () => {
         playerRef.current?.internalPlayer.playVideo();
         setIsPlaying(true);
     });
-    // Andrew - listens for server telling client to load a certain video at certain timestamp
+    // Listens for server telling client to load a certain video at certain timestamp and either play or pause
     socket?.on('videoSynchronization', (currentVideoInfo: YoutubeVideoInfo) => {
         const vidID = currentVideoInfo.url.split('=')[currentVideoInfo.url.split('=').length - 1];
         playerRef.current?.internalPlayer.loadVideoById(vidID, currentVideoInfo.timestamp);
@@ -41,9 +55,10 @@ export default function VideoPlayer(): JSX.Element {
           setIsPlaying(false);
         }
     });
-    // Andrew - listens for server re-enabling client's "Join Stream" button
-    socket?.on('disablePlayPauseButtons', () => {
-        setArePlayPausedDisabled(true);
+    // Listens for server re-enabling client's "Join Stream" button and disabling video player control buttons
+    // as well as unmuting video player for next time client returns to the stream
+    socket?.on('disableControlButtons', () => {
+        setAreControlButtonsDisabled(true);
         setIsMuted(false);
     });
   },[socket]);
@@ -67,16 +82,16 @@ export default function VideoPlayer(): JSX.Element {
       /> </div>
       <div>
         <HStack spacing="82px">
-          { !arePlayPauseDisabled ? <div>
-          <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => {
+          { !areControlButtonsDisabled ? <div>
+          <Button colorScheme="blue" disabled={areControlButtonsDisabled} type="submit" onClick={() => {
             if (isPlaying) {
               socket?.emit('clientPaused');
             } else {
               socket?.emit('clientPlayed');
             }
             }}>Play/Pause</Button>
-          <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => socket?.emit('clientSynced')}>Sync</Button>
-          <Button colorScheme="blue" disabled={arePlayPauseDisabled} type="submit" onClick={() => {
+          <Button colorScheme="blue" disabled={areControlButtonsDisabled} type="submit" onClick={() => socket?.emit('clientSynced')}>Sync</Button>
+          <Button colorScheme="blue" disabled={areControlButtonsDisabled} type="submit" onClick={() => {
             if (isMuted) {
               playerRef.current?.internalPlayer.unMute();
               setIsMuted(false);
@@ -86,10 +101,10 @@ export default function VideoPlayer(): JSX.Element {
             }
             }}>Mute/Unmute</Button>
           </div> : null }
-          { arePlayPauseDisabled ? <div>
-          <Button colorScheme="blue" disabled={!arePlayPauseDisabled} type="submit" onClick={() => {
+          { areControlButtonsDisabled ? <div>
+          <Button colorScheme="blue" disabled={!areControlButtonsDisabled} type="submit" onClick={() => {
             socket?.emit('clientEnteredTVArea');
-            setArePlayPausedDisabled(false);
+            setAreControlButtonsDisabled(false);
           }}>Join Stream</Button>
           </div> : null }
         </HStack>
