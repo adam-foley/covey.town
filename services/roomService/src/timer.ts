@@ -5,34 +5,27 @@
  * https://www.reddit.com/r/learnjavascript/comments/hzc3ux/how_to_find_the_remaining_time_in_settimeout/
  */
 export default class Timer {
-  id;
+  private _timer;
 
-  endTime: number;
+  private _endTime: number;
 
-  videoLength = 0;
+  private _videoLength = 0;
 
   constructor(fn: () => void, delay: number) {
-    this.id = setTimeout(fn, delay);
-    this.endTime = new Date().getTime() + delay;
-    this.videoLength = delay;
+    this._timer = setTimeout(fn, delay);
+    this._endTime = new Date().getTime() + delay;
+    this._videoLength = delay;
   }
 
   clearTimer(): void{
-    clearTimeout(this.id);
-  }
-
-  getRemainingMiliseconds(): number {
-    const remainingTime = (this.endTime - new Date().getTime());
-    return remainingTime > 0 ? remainingTime : 0;
-  }
-
-  getElapsedMiliseconds(): number {
-    const elapsedTime = this.videoLength - this.getRemainingMiliseconds() + 1;
-    return elapsedTime > 0 ? elapsedTime : 0;
+    clearTimeout(this._timer);
   }
 
   getElapsedSeconds(): number {
-    return this.getElapsedMiliseconds() / 1000;
+    const remainingMiliseconds = (this._endTime - Date.now());
+    console.log(remainingMiliseconds)
+    const elapsedMiliseconds = this._videoLength - remainingMiliseconds;
+    return elapsedMiliseconds / 1000;
   }
 
 }
