@@ -33,6 +33,16 @@ function formatDuration(YTDuration: string): string {
   return formattedTime;
 }
 
+function parseDurationToSeconds(videoHoursMinutesSeconds: string[]) : number{
+  let vidDurationSeconds;
+  if (videoHoursMinutesSeconds.length === 3) {
+    vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
+  } else {
+    vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
+  }
+return vidDurationSeconds;
+}
+
 /**
  * The CoveyTownController implements the logic for each town: managing the various events that
  * can occur (e.g. joining a town, moving, leaving a town)
@@ -150,12 +160,7 @@ export default class CoveyTownController {
       isPlaying: this._defaultVideoInfo.isPlaying,
     };
     const videoHoursMinutesSeconds = randomFirstVideo.duration.split(':');
-    let vidDurationSeconds;
-    if (videoHoursMinutesSeconds.length === 3) {
-      vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
-    } else {
-      vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
-    }
+    const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds)
     this._masterVideoLength = vidDurationSeconds;
   }
 
@@ -368,13 +373,7 @@ export default class CoveyTownController {
 
         // Parsing the duration of the randomFirstVideoInfo to be in seconds.
         const videoHoursMinutesSeconds = randomFirstVideo.duration.split(':');
-        let vidDurationSeconds;
-        if (videoHoursMinutesSeconds.length === 3) {
-          vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
-        } else {
-          vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
-        }
-
+        const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds)
         // Set the master video length to the length of randomFirstVideoInfo declared above.
         this._masterVideoLength = vidDurationSeconds;
       }
@@ -403,13 +402,8 @@ export default class CoveyTownController {
 
     const nextVideoInfo = this._videoList.find((video) => video.url === maxVotedURL);
     const videoHoursMinutesSeconds = nextVideoInfo?.duration.split(':');
-    let vidDurationSeconds;
     if (videoHoursMinutesSeconds) {
-      if (videoHoursMinutesSeconds.length === 3) {
-        vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 3600 + parseInt(videoHoursMinutesSeconds[1], 10) * 60 + parseInt(videoHoursMinutesSeconds[2], 10);
-      } else {
-        vidDurationSeconds = parseInt(videoHoursMinutesSeconds[0], 10) * 60 + parseInt(videoHoursMinutesSeconds[1], 10);
-      }
+      const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds)
       this._masterVideoLength = vidDurationSeconds;
     } else {
       this._masterVideoLength = 100;
