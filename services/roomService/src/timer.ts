@@ -1,7 +1,9 @@
-/* This class was created by DreamOfAWhale and is modified in our code to find the time left
-   and time remaining in  our timeout.
-   https://www.reddit.com/r/learnjavascript/comments/hzc3ux/how_to_find_the_remaining_time_in_settimeout/
-*/
+/**
+ * The Timer provides a wrapper for setting/clearing timeouts and allows for getting the number of elapsed
+ * milliseconds and number of remaining milliseconds in timeout. The class was adapted from Reddit user
+ * DreamOfAWhale's simple timer implementation from: 
+ * https://www.reddit.com/r/learnjavascript/comments/hzc3ux/how_to_find_the_remaining_time_in_settimeout/
+ */
 export default class Timer {
   id;
 
@@ -9,7 +11,7 @@ export default class Timer {
 
   videoLength = 0;
 
-  constructor(fn: () => void, delay: number) { // constructor(fn: (...args: any[]) => void, delay: number, ...params: any) {
+  constructor(fn: () => void, delay: number) {
     this.id = setTimeout(fn, delay);
     this.endTime = new Date().getTime() + delay;
     this.videoLength = delay;
@@ -25,7 +27,6 @@ export default class Timer {
   }
 
   getElapsedMiliseconds(): number {
-    // I added one because it looked better
     const elapsedTime = this.videoLength - this.getRemainingMiliseconds() + 1;
     return elapsedTime > 0 ? elapsedTime : 0;
   }

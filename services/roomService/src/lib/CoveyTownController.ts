@@ -16,6 +16,8 @@ const friendlyNanoID = customAlphabet('1234567890ABCDEF', 8);
 
 /**
  * Formats the video duration from ISO 8601 format to hh:mm:ss format
+ * 
+ * @param YTDuration The ISO 8601 formated video duration
  */
 function formatDuration(YTDuration: string): string { 
   const timeArray= YTDuration.match(/(\d+)(?=[MHS])/ig)||[]; 
@@ -38,6 +40,8 @@ function formatDuration(YTDuration: string): string {
 
 /**
  * Converts video duration from array of hours, minutes, seconds to total seconds
+ * 
+ * @param videoHoursMinutesSeconds The list of hours, minutes, seconds to convert to seconds
  */
 function parseDurationToSeconds(videoHoursMinutesSeconds: string[]) : number{
   let vidDurationSeconds;
@@ -118,31 +122,31 @@ export default class CoveyTownController {
 
   private _capacity: number;
 
-  // Andrew - map of players to listeners so that controller knows which listener to use when a specific player
-  // needs something
+  /** The map of players in the TV area to their listener * */
   private _listenersInTVAreaMap: Map<Player, CoveyTownListener> = new Map<Player, CoveyTownListener>();
 
-  // Andrew - default video info to send to player that is first to join tv area
-  private _defaultVideoInfo: YoutubeVideoInfo; // construction moved to constructor
+  /** Default video info to send to player that is first to join tv area * */
+  private _defaultVideoInfo: YoutubeVideoInfo;
   
-  // Adam - I think we can use this when pciking next video? Maybe we put video length in here instead of it's own variable?
-  private _currentVideoInfo: YoutubeVideoInfo; // construction moved to constructor
+  /** Up to date video info that is currently playing on tv stream * */
+  private _currentVideoInfo: YoutubeVideoInfo;
 
-  // Master video length and time elapsed are in seconds to be compatible with Youtube
-  // TODO: Master video leghth for mario video
-  private _masterVideoLength: number; // construction moved to constructor
+  /** The length in seconds of the currently playing video * */
+  private _masterVideoLength: number;
 
+  /** The number of seconds of the current video that have been watched * */
   private _masterTimeElapsed = 0;
 
+  /** The timer that will run out at the end of the currently playing video and cause next video to be chosen * */
   private _currentTimer : Timer | null;
 
-
-  // Andrew - map of video URL to how many votes it has received so that, at the end of the current video, the
-  // server can choose the next video URL and send it to each client to play. 
+  /** The map of video URL to how many votes it has received this round * */
   private _videoURLVotes: Map<string, number> = new Map<string, number>();
 
+  /** The list of videos that are to be displayed on users' widgets to vote on next video * */
   private _videoList: YTVideo[];
 
+  /** The default list of videos that are to be displayed on users' widgets to vote on next video * */
   private _defaultVideoList: YTVideo[];
 
   constructor(friendlyName: string, isPubliclyListed: boolean) {
@@ -154,6 +158,8 @@ export default class CoveyTownController {
     this._currentTimer = null;
     this._videoList = getDefaultVideos();
     this._defaultVideoList = getDefaultVideos();
+
+    // Choose a random first video from the default list of videos
     const randomFirstVideo = this._defaultVideoList[Math.floor(Math.random() * this._defaultVideoList.length)];
     this._defaultVideoInfo = { 
       url: randomFirstVideo.url,
@@ -328,6 +334,9 @@ export default class CoveyTownController {
   /**  
    * Adds player to TV area which adds them to listeners in the TV Area and syncs the player's video to the current state in the Town.
    * This includes the correct video url, time elapsed, and if it is playing currently.
+   * 
+   * @param playerToAdd The player to add to the map of playrs to listeners in the tv area
+   * @param listenerToAdd The listener to add to the map of players to listeners in the tv area
    */
   addToTVArea(playerToAdd: Player, listenerToAdd: CoveyTownListener): void {
     this._listenersInTVAreaMap.set(playerToAdd, listenerToAdd);
@@ -450,7 +459,9 @@ export default class CoveyTownController {
   }
 
   /** 
-   * Cast a vote for the given URL to be played next round
+   * Cast a vote for the given URL to be played next round.
+   * 
+   * @param videoURL The video URL being voted for
    */
   voteForVideo(videoURL: string): void {
     let seenVid = false;
@@ -468,6 +479,9 @@ export default class CoveyTownController {
   /** 
    * Checks inputted URL to see if it is a valid Youtube API using Youtube Data API. Notifies client on whether
    * video URL was legitimate or not and if it has been added to the list of videos to vote on.
+   * 
+   * @param inputURL The inputted video URL that will be potentially validated 
+   * @param listenerSubmittedBy The listener associated with the player who submitted the URL
    */
   async addVideoToVideoList(inputURL: string, listenerSubmittedBy: CoveyTownListener): Promise<void> {
     const instance = axios.create({
@@ -509,6 +523,9 @@ export default class CoveyTownController {
   /** 
    * Checks inputted video URL to see if it is already in the list of videos to vote on. If not, check
    * that the URL is valid and notify user of this fact. Add video to list of videos to vote on if valid.
+   * 
+   * @param videoURL The inputted video URL that will be potentially validated 
+   * @param listenerSubmittedBy The listener associated with the player who submitted the URL
    */
   checkNewURLValidity(videoURL: string, listenerSubmittedBy: CoveyTownListener): void {
     let unseenURLBefore = true;
