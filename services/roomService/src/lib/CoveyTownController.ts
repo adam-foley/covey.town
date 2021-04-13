@@ -381,8 +381,7 @@ export default class CoveyTownController {
     }
   }
 
-  // Andrew - This is how the server chooses the video URL with the most votes. If ther eare no votes then a 
-  // default video will be played.
+  /** Chooses the next video to be played to each player within the  TV Area. */
   chooseNextVideo(): void {
 
     // Destroy the current timer
