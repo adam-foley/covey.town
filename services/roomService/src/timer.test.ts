@@ -1,81 +1,38 @@
-// import Timer from './timer';
+import Timer from './timer';
 
-// // ADAM
-// describe('CoveyTownController', () => {
-//   let timer : Timer
-//   let delay : number
-//   beforeEach(() => {
-//     jest.useFakeTimers();
-//     delay = 1000
-//     timer = new Timer(() => { return true }, delay)
-//   });
-//   afterEach(() =>{
-//     timer.clearTimer() 
-//   });
-//   it('constructor should set the end time property', () => {
-//     let createTime = new Date().getTime()
-//     expect(timer.endTime).toBe(createTime + delay)
-//   });
-//   it('constructor should set the video length property', () => {
-//     expect(timer.videoLength).toBeCloseTo(delay)
-//   });
-//   // it('constructor should set the id property', () => {
-//   //   let delay = 1000
-//   //   const timer = new Timer(() => { return true}, delay)
-//   //   expect(timer.id["ref"]).toBe(setTimeout)
-//   // });
-//   it('should get remaining milliseconds for the current timer', () => {
-
-//     // const Date().time() = jest.fn()
-//     // Date().time().mockReturnValueOnce(0).mockReturnValueOnce(300);
-    
-//     // jest.advanceTimersByTime(300);
-//     // //const elapsed = 500
-//     let trueTimeRemaining = timer.endTime - new Date().getTime()
-//     let timerTimeRemaining = timer.getRemainingMiliseconds()
-//     //expect(timer.getRemainingMiliseconds()).toBe(1000)
-
-//     setTimeout(() => { 
-//       expect( trueTimeRemaining - timerTimeRemaining).toBeLessThan(5)}
-//       ,1000)
-//   });
-//   it('should get elapsed milliseconds for the current timer', () => {
-//     /*const elapsed = 500
-//     setTimeout(() => { 
-//       let trueTimeElapsedSeconds = timer.videoLength - timer.getRemainingMiliseconds()
-//       let timerTimeElapsedSeconds = timer.getElapsedMiliseconds()
-//       expect( trueTimeElapsedSeconds - timerTimeElapsedSeconds).toBeLessThan(5)}
-//       ,elapsed)*/
-
-//     timer.getRemainingMiliseconds = jest.fn(() => 300)
-//     expect(timer.getElapsedMiliseconds()).toBe(701)
-
-//   });
-//   it('should get remaining milliseconds for the current timer', () => {
-//     const elapsed = 500
-//     setTimeout(() => { 
-//       let trueTimeElapsedSeconds = timer.videoLength - timer.getRemainingMiliseconds()
-//       let timerTimeElapsedSeconds = timer.getElapsedMiliseconds()
-//       expect( trueTimeElapsedSeconds - timerTimeElapsedSeconds).toBeLessThan(5)}
-//       ,elapsed)
-//   });
-//   it('should get elapsed seconds for the current timer', () => {
-//     const elapsed = 500
-//     let trueTimeElapsedSeconds = timer.videoLength - timer.getRemainingMiliseconds()
-//     let timerTimeElapsedSeconds = timer.getElapsedMiliseconds()
-//     expect( trueTimeElapsedSeconds - timerTimeElapsedSeconds).toBeLessThan(5)
-//   });
-//   it('should call function when time is elapsed',() => {
-//     const elapsed = 500
-//     setTimeout(() => { 
-//       let trueTimeElapsedSeconds = timer.videoLength - timer.getRemainingMiliseconds()
-//       let timerTimeElapsedSeconds = timer.getElapsedMiliseconds()
-//       expect( trueTimeElapsedSeconds - timerTimeElapsedSeconds).toBeLessThan(5)}
-//       ,elapsed)
-//   });
-//   it('should clear time out when clearTimer is called', () => {
-//     timer.clearTimer()
-//     expect(clearTimeout).toHaveBeenCalledTimes(1)
-//     expect(timer).toBeNull
-//   });
-// });
+describe('CoveyTownController', () => {
+  let timer : Timer;
+  let delay : number;
+  let createTimerTime : number;
+  beforeEach(() => {
+    jest.useFakeTimers();
+    delay = 60000;
+    createTimerTime = new Date().getTime();
+    Date.now = jest.fn().mockImplementation(()=> createTimerTime);
+    timer = new Timer(() => true, delay);
+  });
+  afterEach(() =>{
+    timer.clearTimer();
+  });
+  it('should get elapsed seconds for the current timer when time has elapsed', () => {
+    /* Set the time of Date.now to be 35000 milliseconds from when the timer was created
+       meaning that there should be 35 seconds elapsed on the timer. */
+    Date.now = jest.fn().mockImplementation(()=> createTimerTime + 35000);
+    expect(timer.getElapsedSeconds()).toBe(35);
+  });
+  it('should get elapsed seconds for the current timer when time has not elapsed', () => {
+    /* Set the time of Date.now to be equal to when the timer was created
+    meaning that there should be o seconds elapsed on the timer. */
+    Date.now = jest.fn().mockImplementation(()=> createTimerTime + 0);
+    expect(timer.getElapsedSeconds()).toBe(0);
+  });
+  it('should call clearTimeout when clearTimer is called', () => {
+    timer.clearTimer();
+    expect(clearTimeout).toHaveBeenCalledTimes(1);
+  });
+  it('should call function when timer is completed', () => {
+    // fast forwards the timer, causing the settimeout function to be called.
+    jest.runAllTimers();
+    expect(setTimeout).toHaveBeenCalledTimes(1);
+  });
+});

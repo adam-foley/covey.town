@@ -172,7 +172,7 @@ export default class CoveyTownController {
       isPlaying: this._defaultVideoInfo.isPlaying,
     };
     const videoHoursMinutesSeconds = randomFirstVideo.duration.split(':');
-    const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds)
+    const vidDurationSeconds = parseDurationToSeconds(videoHoursMinutesSeconds);
     this._masterVideoLength = vidDurationSeconds;
   }
 
@@ -348,7 +348,7 @@ export default class CoveyTownController {
       upToDateVideoInfo = { 
         url: this._currentVideoInfo.url, 
         timestamp:  this._masterTimeElapsed + this._currentTimer.getElapsedSeconds(), 
-        isPlaying : true
+        isPlaying : true,
       };
     } else if (this._listenersInTVAreaMap.size === 1) {
       // If they are the first player, provide the default video info and start a timer as default is to play when the first player enters
