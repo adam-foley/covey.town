@@ -22,7 +22,7 @@ export default class Timer {
     // Create the setTimeout based on the length of desired timer.
     this._timer = setTimeout(fn, lengthOfTimer);
     // Calculate the "end time" of the timer based on the UTC time now and the length of timer.
-    this._timerEndTime = new Date().getTime() + lengthOfTimer;
+    this._timerEndTime = Date.now() + lengthOfTimer;
     // Set the length of the timer.
     this._timerLength = lengthOfTimer;
   }
