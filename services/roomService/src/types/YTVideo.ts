@@ -59,10 +59,10 @@ const video5: YTVideo = {
 videoList.push(video5);
 
 const video6: YTVideo = {
-  url: 'https://www.youtube.com/watch?v=leL_bsHEZdM',
-  title: 'Key & Peele - Gangsta Standoff',
-  channel: 'Key & Peele',
-  duration: '02:49',
+  url: 'https://www.youtube.com/watch?v=DDzApF9ytFA',
+  title: 'Bryson DeChambeau Hole-In-One',
+  channel: 'The Masters',
+  duration: '00:32',
 };
 videoList.push(video6);
 
