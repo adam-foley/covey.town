@@ -4,7 +4,7 @@ Covey.Town provides a virtual meeting space where different groups of people can
 Covey.Town was built for Northeastern's [Spring 2021 software engineering course](https://neu-se.github.io/CS4530-CS5500-Spring-2021/), and is designed to be reused across semesters.
 You can view our reference deployment of the app at [app.covey.town](https://app.covey.town/).
 
-![Covey.Town Architecture](docs/covey-town-architecture.png)
+![Covey.Town Architecture](docs/covey-town-project-architecture.png)
 
 The figure above depicts the high-level architecture of Covey.Town.
 The frontend client (in the `frontend` directory of this repository) uses the [PhaserJS Game Library](https://phaser.io) to create a 2D game interface, using tilemaps and sprites.
@@ -23,7 +23,16 @@ To create an account and configure your local environment:
 
 1. Go to [Twilio](https://www.twilio.com/) and create an account. You do not need to provide a credit card to create a trial account.
 2. Create an API key and secret (select "API Keys" on the left under "Settings")
-3. Create a `.env` file in the `services/roomService` directory, setting the values as follows:
+3. Create a `.env` file in the `services/roomService` directory, setting the Twilio values like in the below chart.
+4. In addition to the Twilio API key and secret that were created, in order to run the backend, you will need to make a YouTube API key as well.  
+- Login into Google’s Developer Console using a google account 
+- Once logged in, click ‘Create Project’. Then name the project and click ‘Create’ 
+- Once the project is selected, within App & Services, click ‘Enable APIs and Services’ 
+- Scroll and find the ‘YouTube Data API v3’ and click on it. Then click ‘Enable’ 
+- Then find ‘Create Credentials’ on the right and click it 
+- Follow the directions. Use Youtube Data API, call API from web server, access Public data. Then click ‘What credentials do I need’ 
+- Then you are presented with your Youtube API Key. Click done and you are set.  
+5. After the YouTube API is created, add the key to the .env file in the services/roomService directory like previously done with the Twilio Key and secret. Set the key to YOUTUBE_API_KEY. For example, if your key was abcdef12345, then write YOUTUBE_API_KEY= abcdef12345 in the .env file.
 
 | Config Value            | Description                               |
 | ----------------------- | ----------------------------------------- |
@@ -31,6 +40,7 @@ To create an account and configure your local environment:
 | `TWILIO_API_KEY_SID`    | The SID of the new API key you created.   |
 | `TWILIO_API_KEY_SECRET` | The secret for the API key you created.   |
 | `TWILIO_API_AUTH_TOKEN` | Visible on your twilio account dashboard. |
+| `YOUTUBE_API_KEY`       | The key for the Youtube Data API created. |
 
 ### Starting the backend
 
@@ -45,3 +55,9 @@ Create a `.env` file in the `frontend` directory, with the line: `REACT_APP_TOWN
 
 In the `frontend` directory, run `npm start` (again, you'll need to run `npm install` the very first time). After several moments (or minutes, depending on the speed of your machine), a browser will open with the frontend running locally.
 The frontend will automatically re-compile and reload in your browser if you change any files in the `frontend/src` directory.
+
+### Links
+- GitHub repo
+    - https://github.com/adam-foley/covey.town
+- Website from deployment to Netlify + Heroku
+    - https://elastic-ritchie-8364f1.netlify.app/
