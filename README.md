@@ -25,13 +25,13 @@ To create an account and configure your local environment:
 2. Create an API key and secret (select "API Keys" on the left under "Settings")
 3. Create a `.env` file in the `services/roomService` directory, setting the Twilio values like in the below chart.
 4. In addition to the Twilio API key and secret that were created, in order to run the backend, you will need to make a YouTube API key as well.  
-- Login into Google’s Developer Console using a google account 
-- Once logged in, click ‘Create Project’. Then name the project and click ‘Create’ 
-- Once the project is selected, within App & Services, click ‘Enable APIs and Services’ 
-- Scroll and find the ‘YouTube Data API v3’ and click on it. Then click ‘Enable’ 
-- Then find ‘Create Credentials’ on the right and click it 
-- Follow the directions. Use Youtube Data API, call API from web server, access Public data. Then click ‘What credentials do I need’ 
-- Then you are presented with your Youtube API Key. Click done and you are set.  
+    - Login into Google’s Developer Console using a google account 
+    - Once logged in, click ‘Create Project’. Then name the project and click ‘Create’ 
+    - Once the project is selected, within App & Services, click ‘Enable APIs and Services’ 
+    - Scroll and find the ‘YouTube Data API v3’ and click on it. Then click ‘Enable’ 
+    - Then find ‘Create Credentials’ on the right and click it 
+    - Follow the directions. Use Youtube Data API, call API from web server, access Public data. Then click ‘What credentials do I need’ 
+    - Then you are presented with your Youtube API Key. Click done and you are set.  
 5. After the YouTube API is created, add the key to the .env file in the services/roomService directory like previously done with the Twilio Key and secret. Set the key to YOUTUBE_API_KEY. For example, if your key was abcdef12345, then write YOUTUBE_API_KEY= abcdef12345 in the .env file.
 
 | Config Value            | Description                               |
