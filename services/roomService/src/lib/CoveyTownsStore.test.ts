@@ -7,13 +7,6 @@ import { YTVideo } from '../types/YTVideo';
 
 const mockCoveyListenerTownDestroyed = jest.fn();
 const mockCoveyListenerOtherFns = jest.fn();
-// const mockCoveyListenerPlayerPaused = jest.fn();
-// const mockCoveyListenerPlayerPlayed = jest.fn();
-// const mockCoveyListenerEnableVoting = jest.fn();
-// const mockCoveyListenerDisablePlayPause = jest.fn();
-// const mockCoveyListenerResetVideoOptions = jest.fn();
-// const mockCoveyListenerDisplayVotingWidget = jest.fn();
-
 
 function mockCoveyListener(): CoveyTownListener {
   return {
@@ -29,39 +22,20 @@ function mockCoveyListener(): CoveyTownListener {
     onPlayerJoined(newPlayer: Player) {
       mockCoveyListenerOtherFns(newPlayer);
     },
-    onPlayerPaused() {
-      // mockCoveyListenerPlayerPaused();
-    },
-    onPlayerPlayed() {
-      // mockCoveyListenerPlayerPlayed();
-    },
+    onPlayerPaused() {},
     onVideoSyncing(videoInfo: YoutubeVideoInfo) {
       mockCoveyListenerOtherFns(videoInfo);
     },
-    onEnableVoting() {
-      // mockCoveyListenerEnableVoting();
-    },
-    onDisablePlayPause() {
-      // mockCoveyListenerDisablePlayPause();
-    },
+    onEnableVoting() {},
+    onDisableControlButtons() {},
     onUpdatingNextVideoOptions(videoList: YTVideo[]) {
       mockCoveyListenerOtherFns(videoList);
     },
-    onResetVideoOptions() {
-      // mockCoveyListenerResetVideoOptions();
-    },
-    onDisplayVotingWidget() {
-      // mockCoveyListenerDisplayVotingWidget();
-    },
-    onVideoAdded() {
-      // mock included here
-    },
-    onUnableToAddVideo() {
-      // mock included here
-    },
-    onUnableToUseURL() {
-      // mock included here
-    },
+    onResetVideoOptions() {},
+    onDisplayVotingWidget() {},
+    onVideoAdded() {},
+    onUnableToAddVideo() {},
+    onUnableToUseURL() {},
   };
 }
 
