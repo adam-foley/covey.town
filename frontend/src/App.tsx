@@ -16,7 +16,7 @@ import VideoContext from './contexts/VideoContext';
 import Login from './components/Login/Login';
 import CoveyAppContext from './contexts/CoveyAppContext';
 import NearbyPlayersContext from './contexts/NearbyPlayersContext';
-import AppStateProvider, { useAppState } from './components/VideoCall/VideoFrontend/state'; // StateContext removed
+import AppStateProvider, { useAppState } from './components/VideoCall/VideoFrontend/state';
 import useConnectionOptions from './components/VideoCall/VideoFrontend/utils/useConnectionOptions/useConnectionOptions';
 import UnsupportedBrowserWarning
   from './components/VideoCall/VideoFrontend/components/UnsupportedBrowserWarning/UnsupportedBrowserWarning';
