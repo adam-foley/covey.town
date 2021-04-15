@@ -1099,7 +1099,6 @@ describe('CoveyTownController', () => {
         const mockListener = mock<CoveyTownListener>();
         testingTown.addTownListener(mockListener);
         const newPlayer = new Player('test player');
-        // testingTown["_listenersInTVAreaMap"].set(newPlayer, mockListener);
         testingTown.addToTVArea(newPlayer, mockListener);
         testingTown.pauseVideos();
         // find the 'clientPaused' event handler for the socket, which should have been registered after the socket was connected
@@ -1203,7 +1202,6 @@ describe('CoveyTownController', () => {
         testingTown.addTownListener(mockListener);
         const newPlayer = new Player('test player');
 
-        // testingTown["_listenersInTVAreaMap"].set(newPlayer, mockListener);
         testingTown.addToTVArea(newPlayer, mockListener);
         // find the 'clientVoted' event handler for the socket, which should have been registered after the socket was connected
         const clientVotedHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientVoted');
