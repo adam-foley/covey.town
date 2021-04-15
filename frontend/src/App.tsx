@@ -9,8 +9,8 @@ import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
 import WorldMap from './components/world/WorldMap';
 import VideoOverlay from './components/VideoCall/VideoOverlay/VideoOverlay';
-import VideoPlayer from './components/VideoPlayer/VideoPlayer'; // Andrew - separate component for youtube
-import VideoListWidget from './components/VideoListWidget/VideoListWidget'; // Andrew - separate component for youtube
+import VideoPlayer from './components/VideoPlayer/VideoPlayer';
+import VideoListWidget from './components/VideoListWidget/VideoListWidget';
 import { CoveyAppState, NearbyPlayers } from './CoveyTypes';
 import VideoContext from './contexts/VideoContext';
 import Login from './components/Login/Login';
@@ -42,12 +42,6 @@ type CoveyAppUpdate =
   | { action: 'weMoved'; location: UserLocation }
   | { action: 'disconnect' }
   ;
-
-  //   | { action: 'playerPaused'; } // Andrew - action is set off when server tells client that another client's youtube player paused
-  // | { action: 'playerPlayed'; } // Andrew - action is set off when server tells client that another client's youtube player played
-  // | { action: 'addYTplayer'; ytplayer: YouTubePlayer } // Andrew - when the youtube react component renders, this ytplayer variable is set to the rendered youtube player
-  // | { action: 'syncVideo'; videoInfo: YoutubeVideoInfo } // Andrew - tells the youtube player to load given video URL, timestamp, and playing/paused
-  // | { action: 'nullifyYTplayer' } // Andrew - sets youtube player to null so that accidental emits from "ghost" youtube player renders do not occur
 
 function defaultAppState(): CoveyAppState {
   return {

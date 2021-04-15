@@ -1,5 +1,5 @@
 import { customAlphabet, nanoid } from 'nanoid';
-import dotenv from 'dotenv'; // ANDREW - TODO ADDED FOR GOOGLE API KEY
+import dotenv from 'dotenv';
 import axios from 'axios';
 import { UserLocation, YoutubeVideoInfo } from '../CoveyTypes';
 import CoveyTownListener from '../types/CoveyTownListener';
