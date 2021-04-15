@@ -6,13 +6,13 @@ Our synchronous video player feature has a few major parts: an interactive video
 
 The two components (VideoPlayer and VideoListWidget) are visually placed below the world map and the Twilio video feed. They were placed here instead of to the right of the map so that the video player would show up right under the Twilio video feed so that users could talk about the video while watching and also be able to interact with the voting widget. The App function in App.tsx was modified to include these two components under the WorldMap and VideoOverlay components. The map has three additions (the first two additions required changes to tuxemon-town.json): 1) A TV icon was added north of where the player spawns, 2) A label for the “TV Area” was placed in the middle of the area that a user can join the synchronous stream from, and 3) A helpful hint to “Walk into TV Area to watch videos” was added at the top left of the screen with a small code change in WorldMap.tsx. 
 
-![Frontend App](docs/frontend_app.png)
+![Frontend App](docs/frontend_app.PNG)
 
 ### VideoPlayer: 
 
 The video player is only rendered when the user walks into the TV Area. App.tsx was modified so that when the user enters the area, a boolean controlling the rendering called showYTPlayer (which has been added to the CoveyAppState) is set to true. The App.tsx keeps the state of the showTYPlayer based on the user location. Note: Both the video player and voting widget components use the useCoveyAppState hook to gain access to showYTPlayer and the socket. Once rendered, the youtube player will have a transparent <div/> box on top of it which forces the user to interact with the youtube player exclusively through Chakra UI buttons since the youtube player cannot be clicked. Once rendered, the only button initially displayed is a “Join Stream” button, which upon being clicked, will emit a message through the socket to the server to add the user and their associated listener into a hashmap of users in the TV area, and the three buttons for controlling the youtube player will appear and be enabled on the screen. The voting widget, discussed in the next paragraph, will also be rendered after the user clicks “Join Stream”. The first Chakra UI button “Play/Pause” emits a message to the server to either play or pause every client’s video at the same time to maintain synchronicity. Similarly, the second button “Sync” emits a message to the server to have every client’s video load up from the same timestamp (this is useful in case buffering causes videos to go out of sync). Upon first rendering, the video player uses the useEffect hook to set up socket event handlers that receive these incoming messages about pausing/playing/syncing and have the youtube player object call the relevant methods. The third button “Mute/Unmute”, on the other hand, does not interact with sockets or the server since clicking it directly calls the mute or unmute method on the youtube player object. 
 
-![Frontend VideoPlayer](docs/frontend_videoplayer.png)
+![Frontend VideoPlayer](docs/frontend_videoplayer.PNG)
 
 ### VideoListWidget: 
 
@@ -20,16 +20,16 @@ As mentioned above, the voting widget (VideoListWidget) renders once the user cl
 
 Finally, App.tsx was modified so that walking away from the TV Area 1) sets showYTPlayer to false causing both the video player component and voting widget component to disappear from screen and 2) emits a message to the server that this client has left the area. 
 
-![Frontend VideoListWidget](docs/frontend_videolistwidget.png)
+![Frontend VideoListWidget](docs/frontend_videolistwidget.PNG)
 
 ## Backend: 
 
 The most prominent additions to the backend were made in modifying the CoveyTownController. Modifications were also made to the CoveyTownListener interface to have methods for communicating with clients during, just before, or just after being in the TV Area. CoveyTownRequestHandlers was modified so that townSubscriptionHandler would set up the socket to receive messages from clients and call the appropriate CoveyTownController methods related to the video feature. The townSocketAdapter was also modified to listen for events relevant to users in the TV Area and emit messages through the socket to the client to appropriately update their components. A Timer class (timer.ts) was added so that the controller would have a tool for setting timeouts that would choose the next video to play after the video completed. The timer class allowed for getting the number of seconds elapsed in the current video as well. A YTVideo.ts file was also added to keep track of the default videos that the server gives to a client who was the first user to join the video stream to display in their voting widget. Inside of this file is the YTVideo type that has a url, title, channel, and duration, which is used to represent a video. CoveyTypes.ts also includes a new type YoutubeVideoInfo that has a url, timestamp, and isPlaying boolean which is used to represent the current state of the video playing or to be played. 
 
-![Backend CoveyTownListener](docs/backend_listener.png)
-![Backend townSubscriptionHandler](docs/backend_townSubscriptionHandler.png)
-![Backend townSocketAdapter](docs/backend_townSocketAdapter.png)
-![Backend Timer](docs/backend_timer.png)
+![Backend CoveyTownListener](docs/backend_listener.PNG)
+![Backend townSubscriptionHandler](docs/backend_townSubscriptionHandler.PNG)
+![Backend townSocketAdapter](docs/backend_townSocketAdapter.PNG)
+![Backend Timer](docs/backend_timer.PNG)
 
 ### CoveyTownController: 
 
@@ -39,4 +39,4 @@ Another design choice we made was to track time on the server through a master t
 
 The server maintains a map of video URLs to the number of votes that have been cast for each URL. This list is updated every time a client casts a vote for a URL and the socket receives the URL and submits it to the controller. When the timer runs out for the current video, a method in the controller is called which iterates through the map and finds the URL with the most votes. The controller then has each listener in the TV Area tell their respective client to load that URL and play the video. The controller also creates a new blank map of URLs to votes when the next video is chosen to ensure that all votes cast only affect the next video chosen. Users can also submit their own URL to be added to everyone’s voting widget in the TV Area. When the user submits a URL on the frontend, it is sent to the server through the socket and the controller makes a call to the Youtube Data API to validate the URL. If it is valid then the controller will add the information about the new video to its master list of videos for this session and have the listeners send the updated info to the users to add to their widgets. If the URL is invalid, the controller will notify only the submitting user that their proposed URL was invalid. An environment key was added so that the server is authorized to make calls to the Youtube Data API. 
 
-![Backend Controller](docs/backend_controller.png)
+![Backend Controller](docs/backend_controller.PNG)
