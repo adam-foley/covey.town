@@ -32,7 +32,7 @@ To create an account and configure your local environment:
     - Then find ‘Create Credentials’ on the right and click it 
     - Follow the directions. Use Youtube Data API, call API from web server, access Public data. Then click ‘What credentials do I need’ 
     - Then you are presented with your Youtube API Key. Click done and you are set.  
-5. After the YouTube API is created, add the key to the `.env` file in the `services/roomService` directory like previously done with the Twilio Key and secret. Set the key to `YOUTUBE_API_KEY`. For example, if your key was `abcdef12345`, then write `YOUTUBE_API_KEY= abcdef12345` in the `.env` file.
+5. After the YouTube API is created, add the key to the `.env` file in the `services/roomService` directory like previously done with the Twilio Key and secret. Set the key to `YOUTUBE_API_KEY`. For example, if your key was `abcdef12345`, then write `YOUTUBE_API_KEY=abcdef12345` in the `.env` file.
 
 | Config Value            | Description                               |
 | ----------------------- | ----------------------------------------- |
