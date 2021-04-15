@@ -11,6 +11,7 @@ import {townSubscriptionHandler} from '../requestHandlers/CoveyTownRequestHandle
 import CoveyTownsStore from './CoveyTownsStore';
 import * as TestUtils from '../client/TestUtils';
 import { getDefaultVideos, YTVideo } from '../types/YTVideo';
+import axios from 'axios';
 
 jest.mock('./TwilioVideo');
 
@@ -213,49 +214,6 @@ describe('CoveyTownController', () => {
         expect(clearTimeout).toBeCalled();
       });
   });
-
-  // describe('addVideoToVideoList', () => { // ANDREW - Have not figured out proper way to mock axios and return right data
-  //   it('should add URL to videoList if approved',
-  //     async () => {
-  //       const townName = `FriendlyNameTest-${nanoid()}`;
-  //       const townController = new CoveyTownController(townName, false);
-  //       const player = new Player('test player');
-  //       const axios = require('axios');
-  //       jest.mock('axios');
-  //       // const mockAxios = jest.genMockFromModule('axios')
-  //       // this is the key to fix the axios.create() undefined error!
-  //       //mockAxios.create = jest.fn(() => mockAxios)
-
-  //       // let someObject : any
-  //       // someObject.get.mockImplementationOnce(() => Promise.resolve(vidResponse));
-
-  //       // Instance - 463
-  //       // axios.create.mockImplementationOnce(() => someObject)
-        
-
-  //       // const addVideoToVideoList = require('./CoveyTownController');
-        
-  //       // const mockedAxios = axios as jest.Mocked<typeof axios>
-  //       // const mock = jest.spyOn(axios, 'get');
-  //       const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
-  //       const vidResponse = {data: vidData};
-  //       axios.create.mockImplementation(() => axios);
-  //       // axios.get.mockImplementation(() => {
-  //       //   return vidResponse;
-  //       // })
-  //       // mock.mockReturnValueOnce(() => Promise.resolve(vidResponse));
-  //       // mockedAxios.get.mockReturnValueOnce(() => Promise.resolve(vidResponse));
-  //       // await axios.get.mockResolvedValue(vidResponse);
-
-  //       await axios.get.mockImplementationOnce(() => Promise.resolve(vidResponse));
-  //       const mockListener = mock<CoveyTownListener>();
-  //       townController.addToTVArea(player, mockListener);
-  //       await townController.addVideoToVideoList('https://www.youtube.com/watch?v=wUqZQTp_gpI', mockListener);
-  //       expect(mockListener.onVideoAdded).toBeCalled();
-  //       expect(mockListener.onUpdatingNextVideoOptions).toBeCalled();
-  //       // expect(townController["_videoList"]).toContainEqual({url: 'https://www.youtube.com/watch?v=wUqZQTp_gpI', title: 'fake title', channel: 'fake channel', duration: '03:21'});
-  //     });
-  // });
   describe('checkNewURLValidity', () => {
     it('should call addVideoToVideoList if URL has not been seen before',
       () => {
@@ -532,11 +490,66 @@ describe('CoveyTownController', () => {
       expect(mockListeners[0].onUpdatingNextVideoOptions).toBeCalledWith(defaultVideoList);
       expect(mockListeners[1].onUpdatingNextVideoOptions).toBeCalledWith(defaultVideoList);
     });
-    // it('should notify added listeners in tv area to call onUpdatingNextVideoOptions when addVideoToVideoList is called', async () => {
-    //   axios.create.mockImplementation((config) => axios);
-    //   axios.get.mockImplementation(() => {})
-    //   // NEED TO FIGURE OUT HOW TO MOCK AXIOS TO TEST ALL OF THE LISTENER METHODS THAT SHOULD BE CALLED AFTER SUCCESSFUL API CALL
-    // });
+    it('should notify submitting listener to call onUpdatingNextVideoOptions when addVideoToVideoList is called with valid URL', async () => {
+      // NOTE: The axios call is mocked, so a real-looking URL is in this test simply so that inputURL.match passes Regex
+      jest.useFakeTimers();
+      jest.mock('axios');
+      const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
+      axios.create = jest.fn(() => axios);
+      const mockGet = jest.spyOn(axios, 'get');
+      mockGet.mockResolvedValue({ data: vidData });
+
+      const mockListener = mock<CoveyTownListener>();
+      const player = new Player('test player');
+      testingTown.addToTVArea(player, mockListener);
+      await testingTown.addVideoToVideoList('https://www.youtube.com/watch?v=epkFTIkHb1Y', mockListener);
+      expect(mockListener.onUpdatingNextVideoOptions).toBeCalled();
+    });
+    it('should notify submitting listener to call onVideoAdded when addVideoToVideoList is called with valid URL', async () => {
+      // NOTE: The axios call is mocked, so a real-looking URL is in this test simply so that inputURL.match passes Regex
+      jest.useFakeTimers();
+      jest.mock('axios');
+      const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
+      axios.create = jest.fn(() => axios);
+      const mockGet = jest.spyOn(axios, 'get');
+      mockGet.mockResolvedValue({ data: vidData });
+
+      const mockListener = mock<CoveyTownListener>();
+      const player = new Player('test player');
+      testingTown.addToTVArea(player, mockListener);
+      await testingTown.addVideoToVideoList('https://www.youtube.com/watch?v=epkFTIkHb1Y', mockListener);
+      expect(mockListener.onVideoAdded).toBeCalled();
+    });
+    it('should notify submitting listener to call onUnableToUseURL when addVideoToVideoList is called with badly formatted URL', async () => {
+      jest.useFakeTimers();
+      jest.mock('axios');
+      const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
+      axios.create = jest.fn(() => axios);
+      const mockGet = jest.spyOn(axios, 'get');
+      mockGet.mockResolvedValue({ data: vidData });
+
+      const mockListener = mock<CoveyTownListener>();
+      const player = new Player('test player');
+      testingTown.addToTVArea(player, mockListener);
+      await testingTown.addVideoToVideoList('badURL.com', mockListener);
+      expect(mockListener.onUnableToUseURL).toBeCalled();
+    });
+    it('should not notify added listeners in tv area to call onUpdatingNextVideoOptions when addVideoToVideoList is called with bad URL', async () => {
+      jest.useFakeTimers();
+      jest.mock('axios');
+      const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
+      axios.create = jest.fn(() => axios);
+      const mockGet = jest.spyOn(axios, 'get');
+      mockGet.mockResolvedValue({ data: vidData });
+
+      const mockListener = mock<CoveyTownListener>();
+      const player = new Player('test player');
+      testingTown.addToTVArea(player, mockListener);
+      await testingTown.addVideoToVideoList('badTestURL.com', mockListener);
+      // first call is from adding player and listener to TV Area map
+      expect(mockListener.onVideoAdded).not.toHaveBeenCalledTimes(2);
+      expect(mockListener.onUpdatingNextVideoOptions).not.toHaveBeenCalledTimes(2);
+    });
     it('should not notify removed listeners of player movement when updatePlayerLocation is called', async () => {
       const player = new Player('test player');
       await testingTown.addPlayer(player);
@@ -981,23 +994,42 @@ describe('CoveyTownController', () => {
         townSubscriptionHandler(mockSocket);
         expect(mockSocket.emit).not.toBeCalledWith('displayVotingWidget');
       });
-      // it('should add a town listener, which should emit "addedVideo" to the socket when a player adds new video when listener in listenersInTVAreaMap', async () => {
-      //   TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
-      //   townSubscriptionHandler(mockSocket);
+      it('should add a town listener, which should emit "addedVideo" to the socket when a player adds new video when listener in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
+        
+        testingTown.addToTVArea(player, testingTown.listeners[0]);
+        testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
+          url.length; // show TS we are using param to escape error
+          listener.onVideoAdded();
+        });
+        testingTown.checkNewURLValidity('testURL', testingTown.listeners[0]);
+        expect(mockSocket.emit).toBeCalledWith('addedVideo');
+      });
+      it('should add a town listener, which should emit "unableToAddVideo" to the socket when a player checks non-formated when listener in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
 
-      //   testingTown.addToTVArea(player, testingTown.listeners[0]);
-      //   testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
-      //     url.length; // this is here to not do anything with first parameter but still show TS we are using it to escape error
-      //     listener.onVideoAdded();
-      //   });
-      //   testingTown.checkNewURLValidity('TestURL', testingTown.listeners[0]);
-      //   expect(mockSocket.emit).toBeCalledWith('addedVideo');
-      // });
-      
+        testingTown.addToTVArea(player, testingTown.listeners[0]);
+        testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
+          url.length; // show TS we are using param to escape error
+          listener.onUnableToAddVideo();
+        });
+        testingTown.checkNewURLValidity('TestURL', testingTown.listeners[0]);
+        expect(mockSocket.emit).toBeCalledWith('unableToAddVideo');
+      });
+      it('should add a town listener, which should emit "unableToUseURL" to the socket when a player checks invalid listener in listenersInTVAreaMap', async () => {
+        TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
+        townSubscriptionHandler(mockSocket);
 
-      // TODO : socket.emit -> addedVideo, unableToAddVideo, unableToUseURL
-
-
+        testingTown.addToTVArea(player, testingTown.listeners[0]);
+        testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
+          url.length; // show TS we are using param to escape error
+          listener.onUnableToUseURL();
+        });
+        testingTown.checkNewURLValidity('TestURL', testingTown.listeners[0]);
+        expect(mockSocket.emit).toBeCalledWith('unableToUseURL');
+      });
       describe('when a socket disconnect event is fired', () => {
         it('should remove the town listener for that socket, and stop sending events to it', async () => {
           TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
@@ -1192,16 +1224,23 @@ describe('CoveyTownController', () => {
           fail('No clientVoted handler registered');
         }
       });
-      it('should forward clientProposedNewURL events from the socket and call addVideoToVideoList in controller', async () => {
+      it('should forward clientProposedNewURL events from the socket to submitting listener', async () => {
+        jest.mock('axios');
+        const vidData = {items: [{snippet: {title: 'fake title', channelTitle: 'fake channel'}, contentDetails: {duration: 'PT3M21S'}}]};
+        axios.create = jest.fn(() => axios);
+        const mockGet = jest.spyOn(axios, 'get');
+        mockGet.mockResolvedValue({ data: vidData });
+
         TestUtils.setSessionTokenAndTownID(testingTown.coveyTownID, session.sessionToken, mockSocket);
         townSubscriptionHandler(mockSocket);
         const mockListener = mock<CoveyTownListener>();
         testingTown.addTownListener(mockListener);
-        testingTown.addVideoToVideoList = jest.fn();
+        testingTown.addToTVArea(player, mockListener);
         const clientProposedNewURLHandler = mockSocket.on.mock.calls.find(call => call[0] === 'clientProposedNewURL');
         if (clientProposedNewURLHandler && clientProposedNewURLHandler[1]) {
-          clientProposedNewURLHandler[1]('testURL1', mockListener);
-          expect(testingTown.addVideoToVideoList).toHaveBeenCalledWith('testURL1', expect.anything());
+          // NOTE: The axios call is mocked, so a real-looking URL is in this test simply so that inputURL.match passes Regex
+          clientProposedNewURLHandler[1]('https://www.youtube.com/watch?v=epkFTIkHb1Y', mockListener);
+          expect(mockListener.onUpdatingNextVideoOptions).toHaveBeenCalled();
         } else {
           fail('No clientProposedNewURL handler registered');
         }
