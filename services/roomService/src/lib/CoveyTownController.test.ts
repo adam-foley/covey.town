@@ -1,6 +1,7 @@
 import {nanoid} from 'nanoid';
 import {mock, mockReset} from 'jest-mock-extended';
 import {Socket} from 'socket.io';
+import axios from 'axios';
 import TwilioVideo from './TwilioVideo';
 import Player from '../types/Player';
 import CoveyTownController from './CoveyTownController';
@@ -11,7 +12,6 @@ import {townSubscriptionHandler} from '../requestHandlers/CoveyTownRequestHandle
 import CoveyTownsStore from './CoveyTownsStore';
 import * as TestUtils from '../client/TestUtils';
 import { getDefaultVideos, YTVideo } from '../types/YTVideo';
-import axios from 'axios';
 
 jest.mock('./TwilioVideo');
 
@@ -999,8 +999,7 @@ describe('CoveyTownController', () => {
         townSubscriptionHandler(mockSocket);
         
         testingTown.addToTVArea(player, testingTown.listeners[0]);
-        testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
-          url.length; // show TS we are using param to escape error
+        testingTown.addVideoToVideoList = jest.fn(async (_url, listener) => {
           listener.onVideoAdded();
         });
         testingTown.checkNewURLValidity('testURL', testingTown.listeners[0]);
@@ -1011,8 +1010,7 @@ describe('CoveyTownController', () => {
         townSubscriptionHandler(mockSocket);
 
         testingTown.addToTVArea(player, testingTown.listeners[0]);
-        testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
-          url.length; // show TS we are using param to escape error
+        testingTown.addVideoToVideoList = jest.fn(async (_url, listener) => {
           listener.onUnableToAddVideo();
         });
         testingTown.checkNewURLValidity('TestURL', testingTown.listeners[0]);
@@ -1023,8 +1021,7 @@ describe('CoveyTownController', () => {
         townSubscriptionHandler(mockSocket);
 
         testingTown.addToTVArea(player, testingTown.listeners[0]);
-        testingTown.addVideoToVideoList = jest.fn(async (url, listener) => {
-          url.length; // show TS we are using param to escape error
+        testingTown.addVideoToVideoList = jest.fn(async (_url, listener) => {
           listener.onUnableToUseURL();
         });
         testingTown.checkNewURLValidity('TestURL', testingTown.listeners[0]);
