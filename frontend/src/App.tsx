@@ -7,19 +7,16 @@ import { io, Socket } from 'socket.io-client';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import assert from 'assert';
-// import YouTube from 'react-youtube'; // Andrew - this is the package that we use as a light wrapper around the iframe component
-import { YouTubePlayer } from 'youtube-player/dist/types'; // Andrew - This is the interface for the youtube player from the react-youtube package
 import WorldMap from './components/world/WorldMap';
 import VideoOverlay from './components/VideoCall/VideoOverlay/VideoOverlay';
-import VideoPlayer from './components/VideoPlayer/VideoPlayer'; // Andrew - separate component for youtube
-import VideoListWidget from './components/VideoListWidget/VideoListWidget'; // Andrew - separate component for youtube
-import { CoveyAppState, NearbyPlayers, YoutubeVideoInfo } from './CoveyTypes';
-// import useCoveyAppState from './hooks/useCoveyAppState';
+import VideoPlayer from './components/VideoPlayer/VideoPlayer';
+import VideoListWidget from './components/VideoListWidget/VideoListWidget';
+import { CoveyAppState, NearbyPlayers } from './CoveyTypes';
 import VideoContext from './contexts/VideoContext';
 import Login from './components/Login/Login';
 import CoveyAppContext from './contexts/CoveyAppContext';
 import NearbyPlayersContext from './contexts/NearbyPlayersContext';
-import AppStateProvider, { useAppState } from './components/VideoCall/VideoFrontend/state'; // StateContext removed
+import AppStateProvider, { useAppState } from './components/VideoCall/VideoFrontend/state';
 import useConnectionOptions from './components/VideoCall/VideoFrontend/utils/useConnectionOptions/useConnectionOptions';
 import UnsupportedBrowserWarning
   from './components/VideoCall/VideoFrontend/components/UnsupportedBrowserWarning/UnsupportedBrowserWarning';
@@ -30,7 +27,12 @@ import { Callback } from './components/VideoCall/VideoFrontend/types';
 import Player, { ServerPlayer, UserLocation } from './classes/Player';
 import TownsServiceClient, { TownJoinResponse } from './classes/TownsServiceClient';
 import Video from './classes/Video/Video';
-// import { Apps } from '@material-ui/icons';
+
+// Define bounds of TV Area for streaming
+const LEFT_EDGE_TV_AREA = 250;
+const RIGHT_EDGE_TV_AREA = 360;
+const LOWER_EDGE_TV_AREA = 770;
+const UPPER_EDGE_TV_AREA = 900;
 
 type CoveyAppUpdate =
   | { action: 'doConnect'; data: { userName: string, townFriendlyName: string, townID: string,townIsPubliclyListed:boolean, sessionToken: string, myPlayerID: string, socket: Socket, players: Player[], emitMovement: (location: UserLocation) => void } }
@@ -39,11 +41,6 @@ type CoveyAppUpdate =
   | { action: 'playerDisconnect'; player: Player }
   | { action: 'weMoved'; location: UserLocation }
   | { action: 'disconnect' }
-  | { action: 'playerPaused'; } // Andrew - action is set off when server tells client that another client's youtube player paused
-  | { action: 'playerPlayed'; } // Andrew - action is set off when server tells client that another client's youtube player played
-  | { action: 'addYTplayer'; ytplayer: YouTubePlayer } // Andrew - when the youtube react component renders, this ytplayer variable is set to the rendered youtube player
-  | { action: 'syncVideo'; videoInfo: YoutubeVideoInfo } // Andrew - tells the youtube player to load given video URL, timestamp, and playing/paused
-  | { action: 'nullifyYTplayer' } // Andrew - sets youtube player to null so that accidental emits from "ghost" youtube player renders do not occur
   ;
 
 function defaultAppState(): CoveyAppState {
@@ -63,7 +60,7 @@ function defaultAppState(): CoveyAppState {
     emitMovement: () => {
     },
     apiClient: new TownsServiceClient(),
-    showYTPlayer: false, // Andrew - boolean that controls whether youtube player react component renders or not
+    showYTPlayer: false,
   };
 }
 function appStateReducer(state: CoveyAppState, update: CoveyAppUpdate): CoveyAppState {
@@ -140,17 +137,18 @@ function appStateReducer(state: CoveyAppState, update: CoveyAppUpdate): CoveyApp
         nextState.nearbyPlayers = state.nearbyPlayers;
       } 
 
-      // Andrew - when player is near TV, show the youtube react component, and when it is not then take it away
+      // When player is near TV, show the youtube player react component, otherwise do not display
       const xLoc = update.location.x;
       const yLoc = update.location.y;
-      if (xLoc > 250 && xLoc < 360 && yLoc > 770 && yLoc < 900) { // this is the area around the tv
+      // This is the area around the TV icon on map
+      if (xLoc > LEFT_EDGE_TV_AREA && xLoc < RIGHT_EDGE_TV_AREA && yLoc > LOWER_EDGE_TV_AREA && yLoc < UPPER_EDGE_TV_AREA) {
         if (!state.showYTPlayer) {
           nextState.showYTPlayer = true;
-          // state.socket?.emit('clientEnteredTVArea');
         }
       } else if (state.showYTPlayer) {
+        // notify server that client has walked away from TV area
         nextState.showYTPlayer = false;
-          state.socket?.emit('clientLeftTVArea');
+        state.socket?.emit('clientLeftTVArea');
       }
       break;
     }
@@ -251,6 +249,7 @@ function App(props: { setOnDisconnect: Dispatch<SetStateAction<Callback | undefi
       return <div>Loading...</div>;
     }
 
+    // Youtube video player and video voting widget are displayed below the map and Twilio video
     return (
       <div>
         <WorldMap /> 
